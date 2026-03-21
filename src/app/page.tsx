@@ -108,7 +108,7 @@ export default function Home() {
               description={project.description}
               status={healthData[project.id]?.status || "checking"}
               latency={healthData[project.id]?.latency}
-              iconName={project.icon as any}
+              iconName={project.icon}
             />
           ))}
         </div>
