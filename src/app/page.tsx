@@ -210,7 +210,7 @@ export default function Home() {
               status={healthData[project.id]?.status || "checking"}
               latency={healthData[project.id]?.latency}
               uptime={uptimeData[project.id]}
-              iconName={project.icon as any}
+              iconName={project.icon}
             />
           ))}
         </div>
