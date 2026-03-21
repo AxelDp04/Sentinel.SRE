@@ -4,13 +4,20 @@ import { useState, useEffect } from "react";
 import { StatusCard } from "@/components/ui/StatusCard";
 import { InfraMap } from "@/components/ui/InfraMap";
 import { DatabasePanel } from "@/components/ui/DatabasePanel";
+import { LatencyChart } from "@/components/ui/LatencyChart";
 import { PROJECTS } from "@/constants/projects";
-import { Shield, LayoutDashboard, Activity, Database, Network, Server } from "lucide-react";
+import { Shield, LayoutDashboard, Activity, Database, Network, Server, TrendingUp } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 interface ServiceHealth {
   status: "online" | "offline" | "checking";
   latency?: number;
+}
+
+interface LatencyPoint {
+  time: string;
+  latency: number;
+  service: string;
 }
 
 export default function Home() {
@@ -22,6 +29,7 @@ export default function Home() {
   );
 
   const [uptimeData, setUptimeData] = useState<Record<string, number>>({});
+  const [latencyHistory, setLatencyHistory] = useState<LatencyPoint[]>([]);
 
   const checkHealth = async (id: string, url: string) => {
     try {
@@ -42,6 +50,28 @@ export default function Home() {
         [id]: { status: "offline" }
       }));
     }
+  };
+
+  const fetchHistory = async () => {
+    // Fetch last 50 logs to show in the chart
+    const { data, error } = await supabase
+      .from("service_logs")
+      .select("service_id, latency, created_at")
+      .order("created_at", { ascending: true })
+      .limit(100);
+
+    if (error) {
+      console.error("Error fetching history:", error.message);
+      return;
+    }
+
+    const formattedData: LatencyPoint[] = data.map(log => ({
+      time: new Date(log.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      latency: log.latency,
+      service: log.service_id
+    }));
+
+    setLatencyHistory(formattedData);
   };
 
   const fetchUptime = async () => {
@@ -67,7 +97,7 @@ export default function Home() {
     const calculatedUptime: Record<string, number> = {};
     PROJECTS.forEach(project => {
       const s = stats[project.id];
-      calculatedUptime[project.id] = s ? (s.online / s.total) * 100 : 100; // Default to 100 if no logs
+      calculatedUptime[project.id] = s ? (s.online / s.total) * 100 : 100;
     });
 
     setUptimeData(calculatedUptime);
@@ -76,6 +106,7 @@ export default function Home() {
   const updateAll = () => {
     PROJECTS.forEach(p => checkHealth(p.id, p.url));
     fetchUptime();
+    fetchHistory();
   };
 
   useEffect(() => {
@@ -107,24 +138,33 @@ export default function Home() {
         <div className="flex gap-4">
           <div className="glass px-4 py-2 flex items-center gap-2">
             <Activity className="w-4 h-4 text-sentinel" />
-            <span className="text-xs font-mono text-sentinel tracking-tighter">SYSTEM: OPTIMAL</span>
+            <span className="text-xs font-mono text-sentinel tracking-tighter">WATCHMAN: ACTIVE</span>
           </div>
           <div className="glass px-4 py-2 flex items-center gap-2">
             <Database className="w-4 h-4 text-sentinel" />
-            <span className="text-xs font-mono text-sentinel tracking-tighter">Uptime: 99.9%</span>
+            <span className="text-xs font-mono text-sentinel tracking-tighter">DB: CONNECTED</span>
           </div>
         </div>
       </header>
 
       {/* TOPOLOGY SECTION */}
-      <section className="max-w-7xl mx-auto mb-16">
-        <div className="flex items-center gap-2 mb-6 text-slate-400 group cursor-help">
-          <Network className="w-5 h-5 text-sentinel group-hover:scale-110 transition-transform" />
-          <h2 className="text-xl font-bold uppercase tracking-widest leading-none">Global Architecture</h2>
-          <span className="text-[10px] font-mono ml-4 opacity-50 border-l border-white/10 pl-4 uppercase">Live Topology</span>
-        </div>
-        <InfraMap healthData={healthData} />
-      </section>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-7xl mx-auto mb-16">
+        <section>
+          <div className="flex items-center gap-2 mb-6 text-slate-400 group cursor-help">
+            <Network className="w-5 h-5 text-sentinel group-hover:scale-110 transition-transform" />
+            <h2 className="text-xl font-bold uppercase tracking-widest leading-none">Global Architecture</h2>
+          </div>
+          <InfraMap healthData={healthData} />
+        </section>
+
+        <section>
+          <div className="flex items-center gap-2 mb-6 text-slate-400 group cursor-help">
+            <TrendingUp className="w-5 h-5 text-sentinel group-hover:scale-110 transition-transform" />
+            <h2 className="text-xl font-bold uppercase tracking-widest leading-none">Latency Trends</h2>
+          </div>
+          <LatencyChart data={latencyHistory} />
+        </section>
+      </div>
 
       {/* Stats Grid Section */}
       <section className="max-w-7xl mx-auto mb-16">
@@ -142,7 +182,7 @@ export default function Home() {
               status={healthData[project.id]?.status || "checking"}
               latency={healthData[project.id]?.latency}
               uptime={uptimeData[project.id]}
-              iconName={project.icon as any}
+              iconName={project.icon}
             />
           ))}
         </div>
