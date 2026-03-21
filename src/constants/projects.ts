@@ -13,14 +13,14 @@ export const PROJECTS: Project[] = [
     id: "arqovex",
     name: "ARQOVEX",
     description: "Marketplace de planos arquitectónicos y propiedades.",
-    url: "https://arqovex.com",
+    url: "https://arqovex-rd.vercel.app", // Updated to a more stable deployment URL
     icon: "Home",
   },
   {
     id: "auditacar",
     name: "AuditaCar RD",
     description: "Plataforma de análisis de mercado de vehículos.",
-    url: "https://auditacar.rd",
+    url: "https://auditacar-rd.vercel.app",
     icon: "Car",
   },
   {

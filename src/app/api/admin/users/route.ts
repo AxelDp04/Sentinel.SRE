@@ -31,7 +31,7 @@ export async function GET() {
       }));
 
       allUsers = [...allUsers, ...projectUsers];
-      totalLiveCount += projectUsers.filter(u => u.is_live).length;
+      totalLiveCount += projectUsers.filter((u: any) => u.is_live).length;
     }
 
     // Sort users by activity
@@ -44,7 +44,7 @@ export async function GET() {
     return NextResponse.json({ 
       users: allUsers,
       live_count: totalLiveCount,
-      debug: projects.map(p => `[DEBUG] Searching sessions in ${p.toUpperCase()}... Found: ${allUsers.filter(u => u.project === p && u.is_live).length}`)
+      debug: projects.map(p => `[DEBUG] Searching sessions in ${p.toUpperCase()}... Found: ${allUsers.filter((u: any) => u.project === p && u.is_live).length}`)
     });
   } catch (err: any) {
     console.error("Sheriff API Error (List):", err.message);

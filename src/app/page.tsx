@@ -4,12 +4,13 @@ import { useState, useEffect } from "react";
 import { StatusCard } from "@/components/ui/StatusCard";
 import { InfraMap } from "@/components/ui/InfraMap";
 import { DatabasePanel } from "@/components/ui/DatabasePanel";
-import { LatencyChart } from "@/components/ui/LatencyChart";
+import { TrafficChart } from "@/components/ui/TrafficChart"; // Updated
+import { EcosystemTable } from "@/components/ui/EcosystemTable"; // New
 import { ActionCenter } from "@/components/ui/ActionCenter";
 import { TerminalSimulator } from "@/components/ui/TerminalSimulator";
 import { SheriffPanel } from "@/components/ui/SheriffPanel";
 import { PROJECTS } from "@/constants/projects";
-import { Shield, LayoutDashboard, Activity, Database, Network, Server, TrendingUp, Zap, Terminal, ShieldAlert } from "lucide-react";
+import { Shield, LayoutDashboard, Activity, Database, Network, Server, TrendingUp, Zap, Terminal, ShieldAlert, Globe } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 interface ServiceHealth {
@@ -17,10 +18,10 @@ interface ServiceHealth {
   latency?: number;
 }
 
-interface LatencyPoint {
+interface UserPoint {
   time: string;
-  latency: number;
-  service: string;
+  id: string;
+  project: string;
 }
 
 export default function Home() {
@@ -33,7 +34,8 @@ export default function Home() {
   );
 
   const [uptimeData, setUptimeData] = useState<Record<string, number>>({});
-  const [latencyHistory, setLatencyHistory] = useState<LatencyPoint[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
+  const [userTraffic, setUserTraffic] = useState<any[]>([]);
 
   const checkHealth = async (id: string, url: string) => {
     try {
@@ -64,38 +66,35 @@ export default function Home() {
     }
   };
 
-  const fetchHistory = async () => {
+  const fetchUsers = async () => {
     try {
-      const { data, error } = await supabase
-        .from("service_logs")
-        .select("service_id, latency, created_at")
-        .order("created_at", { ascending: true })
-        .limit(100);
+      const res = await fetch("/api/admin/users");
+      const data = await res.json();
+      if (data.users) {
+        setUsers(data.users);
+        
+        // Prepare traffic data
+        const traffic = data.users.map((u: any) => ({
+          time: u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '00:00',
+          id: u.id,
+          project: u.project
+        }));
+        setUserTraffic(traffic);
 
-      if (error || !data) throw new Error(error?.message || "No data");
-
-      const formattedData: LatencyPoint[] = data.map(log => ({
-        time: new Date(log.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        latency: log.latency,
-        service: log.service_id
-      }));
-
-      setLatencyHistory(formattedData);
-    } catch {
-      const mockPoints = [
-        { time: "12:00", latency: 45, service: "arqovex" },
-        { time: "13:00", latency: 62, service: "auditacar" },
-        { time: "14:00", latency: 55, service: "agentscout" },
-        { time: "15:00", latency: 48, service: "agentscout" },
-      ];
-      setLatencyHistory(mockPoints);
+        if (data.debug) {
+          data.debug.forEach((msg: string) => {
+            window.dispatchEvent(new CustomEvent("sentinel-log", { detail: { message: msg, type: "info" } }));
+          });
+        }
+      }
+    } catch (err) {
+       console.error("Failed to fetch ecosystem users");
     }
   };
 
   const fetchUptime = async () => {
     try {
       const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-      
       const { data, error } = await supabase
         .from("service_logs")
         .select("service_id, status")
@@ -118,41 +117,42 @@ export default function Home() {
 
       setUptimeData(calculatedUptime);
     } catch {
-      PROJECTS.forEach(p => {
-        setUptimeData(prev => ({ ...prev, [p.id]: 99.9 }));
-      });
+      PROJECTS.forEach(p => setUptimeData(prev => ({ ...prev, [p.id]: 99.9 })));
     }
   };
 
   const updateAll = () => {
     PROJECTS.forEach(p => checkHealth(p.id, p.url));
     fetchUptime();
-    fetchHistory();
+    fetchUsers();
   };
 
   useEffect(() => {
     updateAll();
     const interval = setInterval(updateAll, 30000);
-    return () => clearInterval(interval);
+    const userInterval = setInterval(fetchUsers, 10000);
+    return () => {
+      clearInterval(interval);
+      clearInterval(userInterval);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
     <main className="min-h-screen p-4 md:p-8 lg:p-24 bg-[#020617] text-white selection:bg-sentinel/30 overflow-x-hidden">
       {/* Header Section */}
-      <header className="max-w-7xl mx-auto mb-12 md:mb-16 flex flex-col md:flex-row md:items-end justify-between gap-6">
+      <header className="max-w-7xl mx-auto mb-10 border-b border-white/5 pb-8 flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
           <div className="flex items-center gap-3 mb-4">
             <div className="p-2 bg-sentinel/20 rounded-md ring-1 ring-sentinel/50">
-              <Shield className="w-6 h-6 md:w-8 md:h-8 text-sentinel" />
+              <Shield className="w-8 h-8 text-sentinel" />
             </div>
-            <h1 className="text-2xl md:text-4xl font-black tracking-tighter uppercase italic">
+            <h1 className="text-3xl md:text-5xl font-black tracking-tighter uppercase italic">
               Sentinel <span className="text-sentinel">SRE</span>
             </h1>
           </div>
-          <p className="text-slate-400 max-w-xl text-sm md:text-base">
-            Centro de mando avanzado para el monitoreo de infraestructura, 
-            rendimiento y disponibilidad de aplicaciones críticas.
+          <p className="text-slate-500 max-w-xl text-xs md:text-sm font-mono uppercase tracking-widest">
+            Infrastructure Mastery Level 9 | Real-Time Ecosystem Governance
           </p>
         </div>
 
@@ -160,10 +160,6 @@ export default function Home() {
           <div className="glass px-4 py-2 flex items-center gap-2 shrink-0 border-sentinel/20">
             <Activity className="w-4 h-4 text-sentinel" />
             <span className="text-[10px] font-mono text-sentinel tracking-tighter uppercase">Watchman: Active</span>
-          </div>
-          <div className="glass px-4 py-2 flex items-center gap-2 shrink-0 border-blue-500/20">
-            <Database className="w-4 h-4 text-blue-400" />
-            <span className="text-[10px] font-mono text-blue-400 tracking-tighter uppercase">Sync: Optimal</span>
           </div>
           <div className={`glass px-4 py-2 flex items-center gap-2 shrink-0 transition-all duration-500 ${!safeMode ? 'border-red-500/50 bg-red-500/5 shadow-[0_0_10px_rgba(239,68,68,0.2)]' : 'border-slate-500/20'}`}>
             <ShieldAlert className={`w-4 h-4 ${!safeMode ? 'text-red-500 animate-pulse' : 'text-slate-500'}`} />
@@ -174,9 +170,14 @@ export default function Home() {
         </div>
       </header>
 
-      {/* TOPOLOGY & TRENDS SECTION */}
+      {/* MASTER ECOSYSTEM TABLE - FIXED & PROMINENT */}
+      <section className="max-w-7xl mx-auto mb-16">
+        <EcosystemTable healthData={healthData} users={users} />
+      </section>
+
+      {/* TOPOLOGY & TRAFFIC SECTION */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-7xl mx-auto mb-16">
-        <section className="w-full h-full min-h-[400px]">
+        <section className="w-full">
           <div className="flex items-center gap-2 mb-6 text-slate-400 group cursor-help">
             <Network className="w-5 h-5 text-sentinel group-hover:scale-110 transition-transform" />
             <div>
@@ -192,11 +193,11 @@ export default function Home() {
             <div className="flex items-center gap-2 mb-6 text-slate-400 group cursor-help">
               <TrendingUp className="w-5 h-5 text-sentinel group-hover:scale-110 transition-transform" />
               <div>
-                <h2 className="text-lg md:text-xl font-bold uppercase tracking-widest leading-none">Latency Trends</h2>
-                <p className="text-[10px] text-slate-500 font-mono uppercase tracking-widest mt-1 italic">Velocidad de Respuesta en el Tiempo</p>
+                <h2 className="text-lg md:text-xl font-bold uppercase tracking-widest leading-none">Live User Traffic</h2>
+                <p className="text-[10px] text-slate-500 font-mono uppercase tracking-widest mt-1 italic">Tráfico de Usuarios en Vivo (Auth Nodes)</p>
               </div>
             </div>
-            <LatencyChart data={latencyHistory} />
+            <TrafficChart data={userTraffic} />
           </div>
 
           <div>
@@ -228,14 +229,14 @@ export default function Home() {
         />
       </section>
 
-      {/* SHERIFF PANEL - USER SESSION CONTROL */}
+      {/* SHERIFF PANEL (SESSION LIST) */}
       {!safeMode && (
         <section className="max-w-7xl mx-auto mb-16 animate-in slide-in-from-bottom-5 duration-700">
           <div className="flex items-center gap-2 mb-6">
             <ShieldAlert className="w-5 h-5 text-red-500" />
             <div>
-               <h2 className="text-lg md:text-xl font-bold uppercase tracking-widest text-red-500/80">User Session Control</h2>
-               <p className="text-[10px] text-red-500/40 font-mono uppercase tracking-widest mt-1 italic">Control de Sesiones de Usuarios Activos</p>
+               <h2 className="text-lg md:text-xl font-bold uppercase tracking-widest text-red-500/80">Active Session Archive</h2>
+               <p className="text-[10px] text-red-500/40 font-mono uppercase tracking-widest mt-1 italic">Auditoría Detallada de Sesiones</p>
             </div>
           </div>
           <SheriffPanel />
