@@ -6,10 +6,11 @@ import {
   Calendar, Mail, User, Database, LayoutGrid, ShieldCheck, 
   Key, Eye, Send, Star, ShoppingCart, CheckCircle2, XCircle
 } from "lucide-react";
+import { getStoredAdminKey } from "@/lib/auth";
 
 type TabType = 'global' | 'arqovex' | 'auditacar';
 
-export const SheriffPanel = () => {
+export const SheriffPanel = ({ adminKey: propKey }: { adminKey?: string | null }) => {
   const [activeTab, setActiveTab] = useState<TabType>('global');
   const [users, setUsers] = useState<any[]>([]);
   const [stats, setStats] = useState<any>(null);
@@ -21,9 +22,17 @@ export const SheriffPanel = () => {
   const [userActivity, setUserActivity] = useState<any | null>(null);
   const [fetchingActivity, setFetchingActivity] = useState(false);
 
+  const adminKey = propKey || getStoredAdminKey();
+
   const fetchUsers = async () => {
     try {
-      const res = await fetch("/api/admin/users");
+      const res = await fetch("/api/admin/users", {
+        headers: { "X-Admin-Key": adminKey || "" }
+      });
+      if (res.status === 401) {
+         window.location.reload(); // Force relogin
+         return;
+      }
       const data = await res.json();
       if (data.users) {
         setUsers(data.users);
@@ -52,9 +61,20 @@ export const SheriffPanel = () => {
       const actualId = userId.split(`${projectId}-`)[1];
       const res = await fetch(`/api/admin/users/${actualId}/actions`, {
         method: "POST",
+        headers: { 
+          "X-Admin-Key": adminKey || "",
+          "Content-Type": "application/json"
+        },
         body: JSON.stringify({ action, projectId })
       });
       const data = await res.json();
+      
+      if (data.debug_log) {
+         window.dispatchEvent(new CustomEvent("sentinel-log", { 
+            detail: { message: data.debug_log, type: data.success ? "success" : "error" } 
+         }));
+      }
+
       if (res.ok) {
         alert(data.message || `Action ${action} executed successfully.`);
         if (action === 'reset-password' && data.link) {
@@ -74,7 +94,9 @@ export const SheriffPanel = () => {
     setUserActivity(null);
     try {
       const actualId = user.id.split(`${user.project}-`)[1];
-      const res = await fetch(`/api/admin/users/${actualId}/activity?projectId=${user.project}`);
+      const res = await fetch(`/api/admin/users/${actualId}/activity?projectId=${user.project}`, {
+        headers: { "X-Admin-Key": adminKey || "" }
+      });
       const data = await res.json();
       setUserActivity(data.activity);
     } catch (err) {
@@ -124,7 +146,7 @@ export const SheriffPanel = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatCard label="Población Total" value={activeTab === 'global' ? totalCount : stats?.[activeTab]?.total || 0} icon={<Users className="w-5 h-5 text-sentinel" />} />
         <StatCard label="Sesiones Live" value={activeTab === 'global' ? liveCount : stats?.[activeTab]?.live || 0} icon={<Activity className="w-4 h-4 text-sentinel animate-pulse" />} />
-        <StatCard label="Intervention" value="Level 7" icon={<ShieldCheck className="w-4 h-4 text-blue-400" />} color="text-blue-400" />
+        <StatCard label="Intervention" value="Sovereign" icon={<ShieldCheck className="w-4 h-4 text-blue-400" />} color="text-red-500" />
         <StatCard label="Target Base" value={activeTab.toUpperCase()} icon={<Database className="w-4 h-4 text-purple-400" />} />
       </div>
 
@@ -134,14 +156,14 @@ export const SheriffPanel = () => {
             <thead className="bg-[#0f172a] sticky top-0 backdrop-blur-sm z-10 border-b border-white/10">
               <tr>
                 <th className="px-4 py-3 text-slate-500 uppercase tracking-widest font-bold">Identity</th>
-                <th className="px-4 py-3 text-slate-500 uppercase tracking-widest font-bold text-center">Newsletter</th>
+                <th className="px-4 py-3 text-slate-500 uppercase tracking-widest font-bold text-center">Protocol</th>
                 <th className="px-4 py-3 text-slate-500 uppercase tracking-widest font-bold">Project</th>
                 <th className="px-4 py-3 text-slate-500 uppercase tracking-widest font-bold text-right">Tactical Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
               {loading && filteredUsers.length === 0 ? (
-                <tr><td colSpan={4} className="px-4 py-8 text-center text-slate-600 animate-pulse uppercase tracking-[0.5em]">Syncing Master identities...</td></tr>
+                <tr><td colSpan={4} className="px-4 py-8 text-center text-slate-600 animate-pulse uppercase tracking-[0.5em]">Identity Profile Scan...</td></tr>
               ) : filteredUsers.map(user => (
                 <tr key={user.id} className={`hover:bg-white/5 transition-colors group ${user.is_live ? 'bg-sentinel/5' : ''} ${user.is_admin ? 'border-l-2 border-red-500/50 bg-red-500/5' : ''}`}>
                   <td className="px-4 py-3">
@@ -157,9 +179,8 @@ export const SheriffPanel = () => {
                     </div>
                   </td>
                   <td className="px-4 py-3 text-center">
-                     <span className="flex justify-center italic text-[9px] text-slate-600">
-                        {/* Status fetched via drilldown or we can simulate based on business logic if known */}
-                        SCAN_PENDING
+                     <span className="flex justify-center italic text-[9px] text-slate-600 uppercase">
+                        Sovereign_Node
                      </span>
                   </td>
                   <td className="px-4 py-3">
@@ -223,7 +244,7 @@ export const SheriffPanel = () => {
                 title="Compras Realizadas" 
                 icon={<ShoppingCart className="w-4 h-4 text-purple-500" />}
                 items={userActivity.sales}
-                renderItem={(item: any) => `Venta: $${item.precio || '0.00'} - Ref: ${item.id.slice(0,8)}`}
+                renderItem={(item: any) => `Venta: $${item.precio || '0.00'} - Ref: ${item.id?.slice(0,8)}`}
                 empty="Historial de compras vacío"
               />
               
@@ -250,7 +271,10 @@ export const SheriffPanel = () => {
   async function handleGlobalLogout() {
     if (!confirm("⚠️ Force EXIT of all ecosystem sessions?")) return;
     setIsInvalidating(true);
-    await fetch("/api/admin/logout-all", { method: "POST" });
+    await fetch("/api/admin/logout-all", { 
+      method: "POST",
+      headers: { "X-Admin-Key": adminKey || "" }
+    });
     setIsInvalidating(false);
     fetchUsers();
   }
