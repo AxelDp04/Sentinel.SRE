@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Users, ShieldAlert, LogOut, Activity, UserCheck, Globe, Calendar, Mail, User, Database, LayoutGrid } from "lucide-react";
+import { Users, ShieldAlert, LogOut, Activity, UserCheck, Globe, Calendar, Mail, User, Database, LayoutGrid, ShieldCheck } from "lucide-react";
 
 type TabType = 'global' | 'arqovex' | 'auditacar';
 
@@ -55,8 +55,8 @@ export const SheriffPanel = () => {
             <ShieldAlert className="w-5 h-5 text-red-500" />
           </div>
           <div>
-            <h3 className="text-lg font-black uppercase tracking-tighter text-white italic underline decoration-red-500/30 underline-offset-4">Sovereign Control Hub</h3>
-            <p className="text-[10px] font-mono text-red-400 uppercase tracking-widest">Administrative Node Mastery Active</p>
+            <h3 className="text-lg font-black uppercase tracking-tighter text-white italic underline decoration-red-500/30 underline-offset-4">Identity Audit Mastery</h3>
+            <p className="text-[10px] font-mono text-red-400 uppercase tracking-widest">Profiles Synced with Business Logic</p>
           </div>
         </div>
 
@@ -76,36 +76,36 @@ export const SheriffPanel = () => {
           active={activeTab === 'global'} 
           onClick={() => setActiveTab('global')}
           icon={<LayoutGrid className="w-3 h-3" />}
-          label="Global View"
+          label="Ecosistema Global"
         />
         <TabButton 
           active={activeTab === 'arqovex'} 
           onClick={() => setActiveTab('arqovex')}
           icon={<Database className="w-3 h-3" />}
-          label="ARQOVEX Control"
+          label="ARQOVEX perfiles"
         />
         <TabButton 
           active={activeTab === 'auditacar'} 
           onClick={() => setActiveTab('auditacar')}
           icon={<Database className="w-3 h-3" />}
-          label="AuditaCar Control"
+          label="AuditaCar perfiles"
         />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <div className="glass bg-white/5 p-4 border-none ring-1 ring-sentinel/30 relative overflow-hidden group">
-          <span className="text-[9px] font-mono text-slate-500 uppercase block mb-1">Censo Real (Segmentado)</span>
+          <span className="text-[9px] font-mono text-slate-500 uppercase block mb-1">Población Total</span>
           <div className="flex items-center gap-3">
             <Users className="w-5 h-5 text-sentinel" />
             <span className="text-2xl font-black text-white tracking-tighter">
               {activeTab === 'global' ? totalCount : stats?.[activeTab]?.total || 0}
             </span>
           </div>
-          <p className="text-[8px] text-sentinel/60 mt-2 uppercase font-mono italic">Headcount Verified_MASTER</p>
+          <p className="text-[8px] text-sentinel/60 mt-2 uppercase font-mono italic">Source: Public_Profiles</p>
         </div>
 
         <div className="glass bg-black/40 p-4 border-none ring-1 ring-white/5">
-          <span className="text-[9px] font-mono text-slate-500 uppercase block mb-1">Live Sync</span>
+          <span className="text-[9px] font-mono text-slate-500 uppercase block mb-1">Sesiones Live</span>
           <div className="flex items-center gap-3">
             <Activity className="w-4 h-4 text-sentinel animate-pulse" />
             <span className="text-xl font-bold text-white tracking-tighter">
@@ -115,18 +115,16 @@ export const SheriffPanel = () => {
         </div>
         
         <div className="glass bg-black/40 p-4 border-none ring-1 ring-white/5">
-          <span className="text-[9px] font-mono text-slate-500 uppercase block mb-1">Auth Scheme</span>
-          <div className="flex items-center gap-3">
-            <Globe className="w-4 h-4 text-blue-400" />
-            <span className="text-xl font-bold text-white tracking-tighter uppercase italic text-blue-400/80">Sovereign</span>
+          <span className="text-[9px] font-mono text-slate-500 uppercase block mb-1">Control Layer</span>
+          <div className="flex items-center gap-3 text-red-400 font-bold uppercase text-[10px] italic">
+             <ShieldCheck className="w-3 h-3" /> Master_Admin
           </div>
         </div>
 
         <div className="glass bg-black/40 p-4 border-none ring-1 ring-white/5">
-          <span className="text-[9px] font-mono text-slate-500 uppercase block mb-1">Node Origin</span>
-          <div className="flex items-center gap-3">
-            <Database className="w-4 h-4 text-purple-400" />
-            <span className="text-xl font-bold text-white tracking-tighter uppercase">{activeTab}</span>
+          <span className="text-[9px] font-mono text-slate-500 uppercase block mb-1">Target Node</span>
+          <div className="flex items-center gap-3 text-blue-400 font-bold uppercase text-[10px]">
+             {activeTab.toUpperCase()}
           </div>
         </div>
       </div>
@@ -137,32 +135,39 @@ export const SheriffPanel = () => {
             <thead className="bg-white/5 sticky top-0 backdrop-blur-sm z-20">
               <tr>
                 <th className="px-4 py-3 text-slate-500 uppercase tracking-widest font-bold">Identity</th>
-                <th className="px-4 py-3 text-slate-500 uppercase tracking-widest font-bold">Mailbox</th>
+                <th className="px-4 py-3 text-slate-500 uppercase tracking-widest font-bold">Business Mail</th>
                 <th className="px-4 py-3 text-slate-500 uppercase tracking-widest font-bold">Registered</th>
-                <th className="px-4 py-3 text-slate-500 uppercase tracking-widest font-bold text-right">Status</th>
+                <th className="px-4 py-3 text-slate-500 uppercase tracking-widest font-bold text-right">Role / Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
               {loading && filteredUsers.length === 0 ? (
                 <tr>
-                   <td colSpan={4} className="px-4 py-8 text-center text-slate-600 animate-pulse uppercase tracking-[0.5em]">Identity Census in Progress...</td>
+                   <td colSpan={4} className="px-4 py-8 text-center text-slate-600 animate-pulse uppercase tracking-[0.5em]">Identity Profile Scan...</td>
                 </tr>
               ) : filteredUsers.map(user => (
-                <tr key={user.id} className={`hover:bg-white/5 transition-colors ${user.is_live ? 'bg-sentinel/5' : ''}`}>
+                <tr key={user.id} className={`hover:bg-white/5 transition-colors ${user.is_live ? 'bg-sentinel/5' : ''} ${user.is_admin ? 'border-l-2 border-red-500/50 bg-red-500/5' : ''}`}>
                   <td className="px-4 py-3">
                     <span className={`flex items-center gap-2 font-bold ${user.is_live ? 'text-white' : 'text-slate-300'}`}>
-                      <User className="w-3 h-3 opacity-50" /> {user.name}
+                      <User className={`w-3 h-3 ${user.is_admin ? 'text-red-500' : 'opacity-50'}`} /> 
+                      {user.name}
+                      {user.is_admin && (
+                        <span className="px-1.5 py-0.5 bg-red-600 text-[8px] text-white rounded font-black tracking-tighter animate-pulse ml-2 ring-1 ring-red-400/50 shadow-[0_0_8px_rgba(220,38,38,0.4)]">
+                          ROOT_ADMIN
+                        </span>
+                      )}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-slate-500">
                      <span className="flex items-center gap-1.5"><Mail className="w-3 h-3" /> {user.email}</span>
                   </td>
-                  <td className="px-4 py-3 text-slate-500 italic">
-                    <span className="flex items-center gap-1.5"><Calendar className="w-3 h-3" /> {new Date(user.created_at).toLocaleDateString()}</span>
+                  <td className="px-4 py-3 text-slate-500 italic font-sans flex items-center gap-2">
+                    <Calendar className="w-3 h-3 opacity-30" />
+                    {new Date(user.created_at).toLocaleDateString()}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <span className={`px-2 py-1 rounded-full text-[9px] uppercase font-bold tracking-tighter ${user.is_live ? 'bg-sentinel/20 text-sentinel' : user.is_active ? 'bg-amber-500/20 text-amber-500' : 'bg-slate-500/10 text-slate-500'}`}>
-                      {user.is_live ? 'LIVE' : user.is_active ? 'ACTIVE' : 'SENTINEL_ARCHIVE'}
+                    <span className={`px-2 py-1 rounded-full text-[9px] uppercase font-bold tracking-tighter ${user.is_live ? 'bg-sentinel/20 text-sentinel shadow-[0_0_5px_#10b98140]' : 'bg-slate-500/10 text-slate-500'}`}>
+                      {user.is_live ? 'LIVE' : 'SENTINEL_ARCHIVE'}
                     </span>
                   </td>
                 </tr>
@@ -175,7 +180,7 @@ export const SheriffPanel = () => {
   );
 
   async function handleGlobalLogout() {
-    if (!confirm("⚠️ Force EXIT of all sessions in the ecosystem?")) return;
+    if (!confirm("⚠️ Force EXIT of all ecosystem sessions?")) return;
     setIsInvalidating(true);
     await fetch("/api/admin/logout-all", { method: "POST" });
     setIsInvalidating(false);
@@ -190,6 +195,6 @@ const TabButton = ({ active, onClick, icon, label }: { active: boolean, onClick:
   >
     {icon}
     {label}
-    {active && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-red-500 animate-in fade-in slide-in-from-bottom-1"></div>}
+    {active && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-red-500"></div>}
   </button>
 );
