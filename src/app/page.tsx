@@ -31,7 +31,7 @@ export default function Home() {
           latency: data.latency 
         }
       }));
-    } catch (e) {
+    } catch {
       setHealthData(prev => ({
         ...prev,
         [id]: { status: "offline" }
@@ -47,6 +47,7 @@ export default function Home() {
     updateAll();
     const interval = setInterval(updateAll, 30000);
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
