@@ -178,7 +178,10 @@ export default function Home() {
         <section className="w-full h-full min-h-[400px]">
           <div className="flex items-center gap-2 mb-6 text-slate-400 group cursor-help">
             <Network className="w-5 h-5 text-sentinel group-hover:scale-110 transition-transform" />
-            <h2 className="text-lg md:text-xl font-bold uppercase tracking-widest leading-none">Global Architecture</h2>
+            <div>
+               <h2 className="text-lg md:text-xl font-bold uppercase tracking-widest leading-none">Global Architecture</h2>
+               <p className="text-[10px] text-slate-500 font-mono uppercase tracking-widest mt-1 italic">Mapa de Arquitectura e Interconexiones</p>
+            </div>
           </div>
           <InfraMap healthData={healthData} />
         </section>
@@ -187,7 +190,10 @@ export default function Home() {
           <div>
             <div className="flex items-center gap-2 mb-6 text-slate-400 group cursor-help">
               <TrendingUp className="w-5 h-5 text-sentinel group-hover:scale-110 transition-transform" />
-              <h2 className="text-lg md:text-xl font-bold uppercase tracking-widest leading-none">Latency Trends</h2>
+              <div>
+                <h2 className="text-lg md:text-xl font-bold uppercase tracking-widest leading-none">Latency Trends</h2>
+                <p className="text-[10px] text-slate-500 font-mono uppercase tracking-widest mt-1 italic">Velocidad de Respuesta en el Tiempo</p>
+              </div>
             </div>
             <LatencyChart data={latencyHistory} />
           </div>
@@ -195,7 +201,10 @@ export default function Home() {
           <div>
             <div className="flex items-center gap-2 mb-6 text-slate-400">
               <Terminal className="w-5 h-5 text-sentinel" />
-              <h2 className="text-lg md:text-xl font-bold uppercase tracking-widest leading-none">SRE Terminal</h2>
+              <div>
+                <h2 className="text-lg md:text-xl font-bold uppercase tracking-widest leading-none">SRE Terminal</h2>
+                <p className="text-[10px] text-slate-500 font-mono uppercase tracking-widest mt-1 italic">Registro Operativo de Sistemas</p>
+              </div>
             </div>
             <TerminalSimulator />
           </div>
@@ -206,7 +215,10 @@ export default function Home() {
       <section className="max-w-7xl mx-auto mb-16">
         <div className="flex items-center gap-2 mb-6">
           <Zap className="w-5 h-5 text-sentinel" />
-          <h2 className="text-lg md:text-xl font-bold uppercase tracking-widest text-slate-300">Command Center</h2>
+          <div>
+            <h2 className="text-lg md:text-xl font-bold uppercase tracking-widest text-slate-300">Command Center</h2>
+            <p className="text-[10px] text-slate-500 font-mono uppercase tracking-widest mt-1 italic">Centro de Mando y Mantenimiento</p>
+          </div>
         </div>
         <ActionCenter 
           onForceRefresh={updateAll} 
@@ -220,7 +232,10 @@ export default function Home() {
         <section className="max-w-7xl mx-auto mb-16 animate-in slide-in-from-bottom-5 duration-700">
           <div className="flex items-center gap-2 mb-6">
             <ShieldAlert className="w-5 h-5 text-red-500" />
-            <h2 className="text-lg md:text-xl font-bold uppercase tracking-widest text-red-500/80">User Session Control</h2>
+            <div>
+               <h2 className="text-lg md:text-xl font-bold uppercase tracking-widest text-red-500/80">User Session Control</h2>
+               <p className="text-[10px] text-red-500/40 font-mono uppercase tracking-widest mt-1 italic">Control de Sesiones de Usuarios Activos</p>
+            </div>
           </div>
           <SheriffPanel />
         </section>
@@ -230,7 +245,10 @@ export default function Home() {
       <section className="max-w-7xl mx-auto mb-16">
         <div className="flex items-center gap-2 mb-6">
           <LayoutDashboard className="w-5 h-5 text-sentinel" />
-          <h2 className="text-lg md:text-xl font-bold uppercase tracking-widest text-slate-300">Health Radar</h2>
+          <div>
+            <h2 className="text-lg md:text-xl font-bold uppercase tracking-widest text-slate-300">Health Radar</h2>
+            <p className="text-[10px] text-slate-500 font-mono uppercase tracking-widest mt-1 italic">Estado de Salud de mis Negocios</p>
+          </div>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -252,7 +270,10 @@ export default function Home() {
       <section className="max-w-7xl mx-auto mb-16">
         <div className="flex items-center gap-2 mb-6">
           <Server className="w-5 h-5 text-sentinel" />
-          <h2 className="text-lg md:text-xl font-bold uppercase tracking-widest text-slate-300">Database Ecosystem</h2>
+          <div>
+            <h2 className="text-lg md:text-xl font-bold uppercase tracking-widest text-slate-300">Database Ecosystem</h2>
+            <p className="text-[10px] text-slate-500 font-mono uppercase tracking-widest mt-1 italic">Infraestructura de Datos y Almacenamiento</p>
+          </div>
         </div>
         <DatabasePanel healthData={healthData} />
       </section>

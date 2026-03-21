@@ -1,19 +1,22 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Users, ShieldAlert, LogOut, Search, Activity, UserCheck } from "lucide-react";
+import { Users, ShieldAlert, LogOut, Activity, UserCheck, Zap } from "lucide-react";
 
 export const SheriffPanel = () => {
   const [users, setUsers] = useState<any[]>([]);
+  const [liveCount, setLiveCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [isInvalidating, setIsInvalidating] = useState(false);
 
   const fetchUsers = async () => {
     try {
-      setLoading(true);
       const res = await fetch("/api/admin/users");
       const data = await res.json();
-      if (data.users) setUsers(data.users);
+      if (data.users) {
+        setUsers(data.users);
+        setLiveCount(data.live_count || 0);
+      }
     } catch (err) {
       console.error("Failed to fetch users");
     } finally {
@@ -40,6 +43,8 @@ export const SheriffPanel = () => {
 
   useEffect(() => {
     fetchUsers();
+    const interval = setInterval(fetchUsers, 10000); // Poll every 10s for "Live" status
+    return () => clearInterval(interval);
   }, []);
 
   return (
@@ -50,8 +55,8 @@ export const SheriffPanel = () => {
             <ShieldAlert className="w-5 h-5 text-red-500" />
           </div>
           <div>
-            <h3 className="text-lg font-black uppercase tracking-tighter text-white italic">Modo Sheriff</h3>
-            <p className="text-[10px] font-mono text-red-400 uppercase tracking-widest">Global Governance & Identity Control</p>
+            <h3 className="text-lg font-black uppercase tracking-tighter text-white italic underline decoration-red-500/30 underline-offset-4">Gobernanza de Identidad</h3>
+            <p className="text-[10px] font-mono text-red-400 uppercase tracking-widest">Sheriff Protocol Level 7</p>
           </div>
         </div>
 
@@ -66,35 +71,43 @@ export const SheriffPanel = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        {/* LIVE USERS CARD */}
+        <div className="glass bg-white/5 p-4 border-none ring-1 ring-sentinel/30 relative overflow-hidden group">
+          <div className="absolute top-2 right-2 flex items-center gap-1">
+            <div className="w-2 h-2 rounded-full bg-sentinel animate-ping"></div>
+            <div className="w-2 h-2 rounded-full bg-sentinel shadow-[0_0_5px_#10b981]"></div>
+          </div>
+          <span className="text-[9px] font-mono text-slate-500 uppercase block mb-1">Usuarios en Vivo</span>
+          <div className="flex items-center gap-3">
+            <UserCheck className="w-5 h-5 text-sentinel" />
+            <span className="text-2xl font-black text-white tracking-tighter">{liveCount}</span>
+          </div>
+          <p className="text-[9px] text-slate-500 mt-2 font-mono uppercase italic tracking-tighter">Real-time Presence Active</p>
+        </div>
+
         <div className="glass bg-black/40 p-4 border-none ring-1 ring-white/5">
-          <span className="text-[9px] font-mono text-slate-500 uppercase block mb-1">Total Identities</span>
+          <span className="text-[9px] font-mono text-slate-500 uppercase block mb-1">Directorio de Identidades</span>
           <div className="flex items-center gap-3">
             <Users className="w-4 h-4 text-blue-400" />
             <span className="text-xl font-bold text-white tracking-tighter">{users.length}</span>
           </div>
         </div>
+        
         <div className="glass bg-black/40 p-4 border-none ring-1 ring-white/5">
-          <span className="text-[9px] font-mono text-slate-500 uppercase block mb-1">Active Sessions (24h)</span>
+          <span className="text-[9px] font-mono text-slate-500 uppercase block mb-1">Sesiones Activas (24h)</span>
           <div className="flex items-center gap-3">
-            <Activity className="w-4 h-4 text-sentinel" />
-            <span className="text-xl font-bold text-sentinel tracking-tighter">
+            <Activity className="w-4 h-4 text-amber-500" />
+            <span className="text-xl font-bold text-white tracking-tighter">
               {users.filter(u => u.is_active).length}
             </span>
           </div>
         </div>
-        <div className="glass bg-black/40 p-4 border-none ring-1 ring-white/5">
-          <span className="text-[9px] font-mono text-slate-500 uppercase block mb-1">Authenticated Nodes</span>
-          <div className="flex items-center gap-3">
-            <UserCheck className="w-4 h-4 text-amber-400" />
-            <span className="text-xl font-bold text-white tracking-tighter">2</span>
-          </div>
-        </div>
+
         <div className="glass bg-black/40 p-4 border-none ring-1 ring-white/5 relative overflow-hidden group">
-          <div className="absolute inset-0 bg-sentinel/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-          <span className="text-[9px] font-mono text-slate-500 uppercase block mb-1">Surveillance Status</span>
-          <div className="flex items-center gap-3 italic text-[11px] text-slate-400">
-             <div className="w-1.5 h-1.5 rounded-full bg-sentinel animate-pulse"></div>
-             SCANNING_IDENTITIES...
+          <span className="text-[9px] font-mono text-slate-500 uppercase block mb-1">Vigilancia SRE</span>
+          <div className="flex items-center gap-3">
+            <Zap className="w-4 h-4 text-blue-500 animate-pulse" />
+            <span className="text-[10px] font-mono text-slate-400 uppercase tracking-tighter italic">Scanning_Auth_Nodes...</span>
           </div>
         </div>
       </div>
@@ -104,25 +117,30 @@ export const SheriffPanel = () => {
           <table className="w-full text-left text-[11px] font-mono">
             <thead className="bg-white/5 sticky top-0 backdrop-blur-sm">
               <tr>
-                <th className="px-4 py-3 text-slate-500 uppercase tracking-widest font-bold">Email Identity</th>
-                <th className="px-4 py-3 text-slate-500 uppercase tracking-widest font-bold">Last Pulse</th>
-                <th className="px-4 py-3 text-slate-500 uppercase tracking-widest font-bold">Status</th>
+                <th className="px-4 py-3 text-slate-500 uppercase tracking-widest font-bold">Email</th>
+                <th className="px-4 py-3 text-slate-500 uppercase tracking-widest font-bold">Último Acceso</th>
+                <th className="px-4 py-3 text-slate-500 uppercase tracking-widest font-bold text-right">Estado</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {loading ? (
+              {loading && users.length === 0 ? (
                 <tr>
-                   <td colSpan={3} className="px-4 py-8 text-center text-slate-600 animate-pulse uppercase tracking-[0.5em]">Fetching identities...</td>
+                   <td colSpan={3} className="px-4 py-8 text-center text-slate-600 animate-pulse uppercase tracking-[0.5em]">Escaneando identidades...</td>
                 </tr>
               ) : users.map(user => (
-                <tr key={user.id} className="hover:bg-white/5 transition-colors">
-                  <td className="px-4 py-3 text-slate-300">{user.email}</td>
-                  <td className="px-4 py-3 text-slate-500">
+                <tr key={user.id} className={`hover:bg-white/5 transition-colors ${user.is_live ? 'bg-sentinel/5' : ''}`}>
+                  <td className="px-4 py-3">
+                    <span className={`flex items-center gap-2 ${user.is_live ? 'text-white font-bold' : 'text-slate-400'}`}>
+                      {user.is_live && <div className="w-1.5 h-1.5 rounded-full bg-sentinel animate-pulse"></div>}
+                      {user.email}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-slate-500 italic">
                     {user.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleString() : 'Never'}
                   </td>
-                  <td className="px-4 py-3">
-                    <span className={`px-2 py-0.5 rounded-full text-[9px] uppercase font-bold ${user.is_active ? 'bg-sentinel/20 text-sentinel ring-1 ring-sentinel/30' : 'bg-slate-500/20 text-slate-500 ring-1 ring-white/5'}`}>
-                      {user.is_active ? 'Active' : 'Dormant'}
+                  <td className="px-4 py-3 text-right">
+                    <span className={`px-2 py-0.5 rounded-full text-[9px] uppercase font-bold tracking-tighter ${user.is_live ? 'bg-sentinel/20 text-sentinel' : 'bg-slate-500/10 text-slate-500'}`}>
+                      {user.is_live ? 'LIVE' : user.is_active ? 'ACTIVE' : 'DORMANT'}
                     </span>
                   </td>
                 </tr>
