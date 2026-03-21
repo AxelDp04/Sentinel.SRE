@@ -5,8 +5,9 @@ import { StatusCard } from "@/components/ui/StatusCard";
 import { InfraMap } from "@/components/ui/InfraMap";
 import { DatabasePanel } from "@/components/ui/DatabasePanel";
 import { LatencyChart } from "@/components/ui/LatencyChart";
+import { ActionCenter } from "@/components/ui/ActionCenter";
 import { PROJECTS } from "@/constants/projects";
-import { Shield, LayoutDashboard, Activity, Database, Network, Server, TrendingUp } from "lucide-react";
+import { Shield, LayoutDashboard, Activity, Database, Network, Server, TrendingUp, Zap } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 interface ServiceHealth {
@@ -53,7 +54,6 @@ export default function Home() {
   };
 
   const fetchHistory = async () => {
-    // Fetch last 50 logs to show in the chart
     const { data, error } = await supabase
       .from("service_logs")
       .select("service_id, latency, created_at")
@@ -147,7 +147,7 @@ export default function Home() {
         </div>
       </header>
 
-      {/* TOPOLOGY SECTION */}
+      {/* TOPOLOGY & TRENDS SECTION */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-7xl mx-auto mb-16">
         <section>
           <div className="flex items-center gap-2 mb-6 text-slate-400 group cursor-help">
@@ -165,6 +165,15 @@ export default function Home() {
           <LatencyChart data={latencyHistory} />
         </section>
       </div>
+
+      {/* ADMIN ACTION CENTER */}
+      <section className="max-w-7xl mx-auto mb-16">
+        <div className="flex items-center gap-2 mb-6">
+          <Zap className="w-5 h-5 text-sentinel" />
+          <h2 className="text-xl font-bold uppercase tracking-widest text-slate-300">Command Center</h2>
+        </div>
+        <ActionCenter onForceRefresh={updateAll} />
+      </section>
 
       {/* Stats Grid Section */}
       <section className="max-w-7xl mx-auto mb-16">
@@ -206,7 +215,7 @@ export default function Home() {
             Telemetry: ACTIVE
           </span>
           <span>Watchman: Autonomous</span>
-          <span>Infra Map: Online</span>
+          <span>Command Center: Online</span>
         </div>
       </footer>
     </main>
