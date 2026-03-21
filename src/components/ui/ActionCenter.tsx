@@ -48,6 +48,11 @@ export const ActionCenter = ({ onForceRefresh }: ActionCenterProps) => {
     setLoadingAction(name);
     addActivity(`Initiated ${name}...`, "info");
     
+    // Terminal Log Dispatch
+    window.dispatchEvent(new CustomEvent("sentinel-log", { 
+      detail: { message: `COMMAND_EXEC: ${name.toUpperCase()}...`, type: "system" } 
+    }));
+    
     // Simulate process
     await new Promise(resolve => setTimeout(resolve, 2000));
     
@@ -55,6 +60,10 @@ export const ActionCenter = ({ onForceRefresh }: ActionCenterProps) => {
     
     setLoadingAction(null);
     addActivity(`${name} completed successfully`, "success");
+    
+    window.dispatchEvent(new CustomEvent("sentinel-log", { 
+      detail: { message: `RESULT: ${name.toUpperCase()} [COMPLETED_OK]`, type: "success" } 
+    }));
   };
 
   return (
