@@ -10,9 +10,6 @@ export async function GET() {
     for (const projectId of projects) {
       const supabaseAdmin = getSupabaseAdmin(projectId);
       if (!supabaseAdmin) continue;
-
-      // Simulate terminal debug log (handled by front-end event)
-      // We return the debug signal in the metadata for the front-end to dispatch
       
       const { data: { users }, error } = await supabaseAdmin.auth.admin.listUsers();
       if (error) {
@@ -23,6 +20,7 @@ export async function GET() {
       const projectUsers = users.map((user: any) => ({
         id: `${projectId}-${user.id}`,
         email: user.email,
+        name: user.user_metadata?.full_name || user.user_metadata?.name || "Sentinel_Identity",
         project: projectId,
         last_sign_in_at: user.last_sign_in_at,
         created_at: user.created_at,
@@ -34,20 +32,21 @@ export async function GET() {
       totalLiveCount += projectUsers.filter((u: any) => u.is_live).length;
     }
 
-    // Sort users by activity
+    // Sort users by registration date (descending) to show newest first
     allUsers.sort((a, b) => {
-       const timeA = a.last_sign_in_at ? new Date(a.last_sign_in_at).getTime() : 0;
-       const timeB = b.last_sign_in_at ? new Date(b.last_sign_in_at).getTime() : 0;
-       return timeB - timeA;
+       const dateA = new Date(a.created_at).getTime();
+       const dateB = new Date(b.created_at).getTime();
+       return dateB - dateA;
     });
 
     return NextResponse.json({ 
       users: allUsers,
+      total_count: allUsers.length,
       live_count: totalLiveCount,
-      debug: projects.map(p => `[DEBUG] Searching sessions in ${p.toUpperCase()}... Found: ${allUsers.filter((u: any) => u.project === p && u.is_live).length}`)
+      debug: projects.map(p => `[DEBUG] Legacy Sync in ${p.toUpperCase()}... Registered: ${allUsers.filter(u => u.project === p).length}`)
     });
   } catch (err: any) {
-    console.error("Sheriff API Error (List):", err.message);
+    console.error("Sheriff API Error (List/Sync):", err.message);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

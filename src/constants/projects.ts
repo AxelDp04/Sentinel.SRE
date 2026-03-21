@@ -13,7 +13,7 @@ export const PROJECTS: Project[] = [
     id: "arqovex",
     name: "ARQOVEX",
     description: "Marketplace de planos arquitectónicos y propiedades.",
-    url: "https://arqovex-rd.vercel.app", // Updated to a more stable deployment URL
+    url: "https://arqovex.vercel.app/", // Corrected production endpoint
     icon: "Home",
   },
   {
