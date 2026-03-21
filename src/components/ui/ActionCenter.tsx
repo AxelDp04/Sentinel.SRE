@@ -9,7 +9,8 @@ import {
   Clock, 
   User, 
   CheckCircle2,
-  AlertTriangle
+  AlertTriangle,
+  RotateCcw
 } from "lucide-react";
 
 interface Activity {
@@ -17,7 +18,7 @@ interface Activity {
   user: string;
   action: string;
   time: string;
-  type: "info" | "warning" | "success";
+  type: "info" | "warning" | "success" | "danger";
 }
 
 interface ActionCenterProps {
@@ -31,7 +32,7 @@ export const ActionCenter = ({ onForceRefresh }: ActionCenterProps) => {
   ]);
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
 
-  const addActivity = (action: string, type: "info" | "warning" | "success" = "info") => {
+  const addActivity = (action: string, type: "info" | "warning" | "success" | "danger" = "info") => {
     const newActivity: Activity = {
       id: Math.random().toString(36).substr(2, 9),
       user: "Axel",
@@ -43,18 +44,17 @@ export const ActionCenter = ({ onForceRefresh }: ActionCenterProps) => {
   };
 
   const handleAction = async (name: string, callback?: () => void) => {
-    if (safeMode) return;
+    if (safeMode && name !== "Force Health Check") return;
     
     setLoadingAction(name);
-    addActivity(`Initiated ${name}...`, "info");
+    addActivity(`Initiated ${name}...`, name === "Emergency Rollback" ? "danger" : "info");
     
-    // Terminal Log Dispatch
     window.dispatchEvent(new CustomEvent("sentinel-log", { 
       detail: { message: `COMMAND_EXEC: ${name.toUpperCase()}...`, type: "system" } 
     }));
     
     // Simulate process
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise(resolve => setTimeout(resolve, 3000));
     
     if (callback) callback();
     
@@ -89,35 +89,45 @@ export const ActionCenter = ({ onForceRefresh }: ActionCenterProps) => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-full">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 h-full">
           {/* Action: Force Refresh */}
           <button 
-            disabled={safeMode || loadingAction !== null}
+            disabled={loadingAction !== null}
             onClick={() => handleAction("Force Health Check", onForceRefresh)}
-            className="flex flex-col items-center justify-center gap-3 p-6 glass hover:bg-white/5 transition-all group disabled:opacity-30 disabled:cursor-not-allowed border-none ring-1 ring-white/10 hover:ring-sentinel/50"
+            className="flex flex-col items-center justify-center gap-3 p-4 glass hover:bg-white/5 transition-all group disabled:opacity-30 disabled:cursor-not-allowed border-none ring-1 ring-white/10 hover:ring-sentinel/50"
           >
-            <RefreshCw className={`w-8 h-8 ${loadingAction === "Force Health Check" ? "animate-spin text-sentinel" : "text-slate-400 group-hover:text-sentinel transition-colors"}`} />
-            <span className="text-[10px] font-mono uppercase tracking-widest text-slate-400 group-hover:text-white">Force Refresh</span>
+            <RefreshCw className={`w-6 h-6 ${loadingAction === "Force Health Check" ? "animate-spin text-sentinel" : "text-slate-400 group-hover:text-sentinel transition-colors"}`} />
+            <span className="text-[9px] font-mono uppercase tracking-widest text-slate-400 group-hover:text-white">Force Refresh</span>
           </button>
 
           {/* Action: Purge Cache */}
           <button 
             disabled={safeMode || loadingAction !== null}
             onClick={() => handleAction("Purge Vercel Cache")}
-            className="flex flex-col items-center justify-center gap-3 p-6 glass hover:bg-white/5 transition-all group disabled:opacity-30 disabled:cursor-not-allowed border-none ring-1 ring-white/10 hover:ring-yellow-500/50"
+            className="flex flex-col items-center justify-center gap-3 p-4 glass hover:bg-white/5 transition-all group disabled:opacity-30 disabled:cursor-not-allowed border-none ring-1 ring-white/10 hover:ring-yellow-500/50"
           >
-            <Trash2 className={`w-8 h-8 ${loadingAction === "Purge Vercel Cache" ? "animate-bounce text-yellow-400" : "text-slate-400 group-hover:text-yellow-400 transition-colors"}`} />
-            <span className="text-[10px] font-mono uppercase tracking-widest text-slate-400 group-hover:text-white">Purge Cache</span>
+            <Trash2 className={`w-6 h-6 ${loadingAction === "Purge Vercel Cache" ? "animate-bounce text-yellow-400" : "text-slate-400 group-hover:text-yellow-400 transition-colors"}`} />
+            <span className="text-[9px] font-mono uppercase tracking-widest text-slate-400 group-hover:text-white">Purge Cache</span>
           </button>
 
           {/* Action: DB Vacuum */}
           <button 
             disabled={safeMode || loadingAction !== null}
             onClick={() => handleAction("Database Vacuum")}
-            className="flex flex-col items-center justify-center gap-3 p-6 glass hover:bg-white/5 transition-all group disabled:opacity-30 disabled:cursor-not-allowed border-none ring-1 ring-white/10 hover:ring-blue-500/50"
+            className="flex flex-col items-center justify-center gap-3 p-4 glass hover:bg-white/5 transition-all group disabled:opacity-30 disabled:cursor-not-allowed border-none ring-1 ring-white/10 hover:ring-blue-500/50"
           >
-            <ShieldAlert className={`w-8 h-8 ${loadingAction === "Database Vacuum" ? "animate-pulse text-blue-400" : "text-slate-400 group-hover:text-blue-400 transition-colors"}`} />
-            <span className="text-[10px] font-mono uppercase tracking-widest text-slate-400 group-hover:text-white">DB Vacuum</span>
+            <ShieldAlert className={`w-6 h-6 ${loadingAction === "Database Vacuum" ? "animate-pulse text-blue-400" : "text-slate-400 group-hover:text-blue-400 transition-colors"}`} />
+            <span className="text-[9px] font-mono uppercase tracking-widest text-slate-400 group-hover:text-white">DB Vacuum</span>
+          </button>
+
+          {/* Action: EMERGENCY ROLLBACK */}
+          <button 
+            disabled={safeMode || loadingAction !== null}
+            onClick={() => handleAction("Emergency Rollback")}
+            className="flex flex-col items-center justify-center gap-3 p-4 glass bg-red-500/5 hover:bg-red-500/10 transition-all group disabled:opacity-30 disabled:cursor-not-allowed border-none ring-1 ring-red-500/20 hover:ring-red-500/50"
+          >
+            <RotateCcw className={`w-6 h-6 ${loadingAction === "Emergency Rollback" ? "animate-spin text-red-500" : "text-red-400/70 group-hover:text-red-500 transition-colors"}`} />
+            <span className="text-[9px] font-mono uppercase tracking-widest text-red-400/70 group-hover:text-red-500 font-bold whitespace-nowrap">Emergency Rollback</span>
           </button>
         </div>
       </div>
@@ -136,6 +146,7 @@ export const ActionCenter = ({ onForceRefresh }: ActionCenterProps) => {
                 {activity.type === "success" && <CheckCircle2 className="w-3 h-3 text-sentinel" />}
                 {activity.type === "info" && <Clock className="w-3 h-3 text-blue-400" />}
                 {activity.type === "warning" && <AlertTriangle className="w-3 h-3 text-yellow-400" />}
+                {activity.type === "danger" && <AlertTriangle className="w-3 h-3 text-red-500" />}
               </div>
               <div className="flex-1">
                 <div className="flex justify-between items-center mb-1">
@@ -144,17 +155,10 @@ export const ActionCenter = ({ onForceRefresh }: ActionCenterProps) => {
                   </span>
                   <span className="text-slate-500 font-mono tracking-tighter">{activity.time}</span>
                 </div>
-                <p className="text-slate-400 font-mono italic leading-tight">{activity.action}</p>
+                <p className={`font-mono italic leading-tight ${activity.type === 'danger' ? 'text-red-400' : 'text-slate-400'}`}>{activity.action}</p>
               </div>
             </div>
           ))}
-        </div>
-
-        <div className="mt-auto pt-6 border-t border-white/5">
-          <div className="flex items-center gap-2 text-[9px] font-mono text-slate-600 uppercase tracking-widest">
-            <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></div>
-            Secure_Link: Established
-          </div>
         </div>
       </div>
     </div>
