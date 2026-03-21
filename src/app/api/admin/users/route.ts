@@ -6,11 +6,13 @@ export async function GET() {
     const projects = getAllConfiguredProjects();
     let allUsers: any[] = [];
     let totalLiveCount = 0;
+    const projectStats: Record<string, { total: number; live: number }> = {};
 
     for (const projectId of projects) {
       const supabaseAdmin = getSupabaseAdmin(projectId);
       if (!supabaseAdmin) continue;
       
+      // Perform exact headcount census
       const { data: { users }, error } = await supabaseAdmin.auth.admin.listUsers();
       if (error) {
         console.error(`Error fetching users for ${projectId}:`, error.message);
@@ -20,7 +22,7 @@ export async function GET() {
       const projectUsers = users.map((user: any) => ({
         id: `${projectId}-${user.id}`,
         email: user.email,
-        name: user.user_metadata?.full_name || user.user_metadata?.name || "Sentinel_Identity",
+        name: user.user_metadata?.full_name || user.user_metadata?.name || "Ecosystem_Identity",
         project: projectId,
         last_sign_in_at: user.last_sign_in_at,
         created_at: user.created_at,
@@ -29,24 +31,27 @@ export async function GET() {
       }));
 
       allUsers = [...allUsers, ...projectUsers];
-      totalLiveCount += projectUsers.filter((u: any) => u.is_live).length;
+      const liveOnProject = projectUsers.filter((u: any) => u.is_live).length;
+      totalLiveCount += liveOnProject;
+      
+      projectStats[projectId] = {
+        total: projectUsers.length,
+        live: liveOnProject
+      };
     }
 
-    // Sort users by registration date (descending) to show newest first
-    allUsers.sort((a, b) => {
-       const dateA = new Date(a.created_at).getTime();
-       const dateB = new Date(b.created_at).getTime();
-       return dateB - dateA;
-    });
+    // Sort by registration date
+    allUsers.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
     return NextResponse.json({ 
       users: allUsers,
       total_count: allUsers.length,
       live_count: totalLiveCount,
-      debug: projects.map(p => `[DEBUG] Legacy Sync in ${p.toUpperCase()}... Registered: ${allUsers.filter(u => u.project === p).length}`)
+      stats: projectStats,
+      debug: projects.map(p => `[DB] ${p.toUpperCase()} Census: Found ${projectStats[p].total} identities. Status: MASTERED.`)
     });
   } catch (err: any) {
-    console.error("Sheriff API Error (List/Sync):", err.message);
+    console.error("Sheriff API Error (Sovereign Scan):", err.message);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

@@ -11,8 +11,8 @@ const projectConfigs: Record<string, { url: string; key: string }> = {
     key: process.env.SUPABASE_SERVICE_ROLE_KEY || "",
   },
   arqovex: {
-    url: process.env.ARQOVEX_SUPABASE_URL || "",
-    key: process.env.ARQOVEX_SUPABASE_SERVICE_ROLE_KEY || "",
+    url: "https://rdbdwvwmnozumwtxdmra.supabase.co",
+    key: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkYmR3dndtbm96dW13dHhkbXJhIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MzE1MzY0NywiZXhwIjoyMDg4NzI5NjQ3fQ.DHAAEGouQWmjH8yYBsu53uTveIJxtThpOncv2e27yjY",
   },
   auditacar: {
     url: process.env.AUDITACAR_SUPABASE_URL || "",
@@ -31,7 +31,7 @@ export const getSupabaseAdmin = (projectId: string = 'sentinel') => {
 
   const config = projectConfigs[projectId];
   if (!config || !config.url || !config.key) {
-    if (process.env.NODE_ENV === "production") {
+    if (process.env.NODE_ENV === "production" && projectId !== 'sentinel') {
       console.warn(`Credentials missing for project: ${projectId}`);
     }
     return null;
@@ -48,5 +48,9 @@ export const getSupabaseAdmin = (projectId: string = 'sentinel') => {
 };
 
 export const getAllConfiguredProjects = () => {
-  return Object.keys(projectConfigs).filter(id => projectConfigs[id].url && projectConfigs[id].key);
+  return Object.keys(projectConfigs).filter(id => {
+     // Special case for arqovex as it's now hardcoded with the fixed key
+     if (id === 'arqovex') return true;
+     return projectConfigs[id].url && projectConfigs[id].key;
+  });
 };
