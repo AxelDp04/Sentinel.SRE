@@ -37,6 +37,11 @@ export const getSupabaseAdmin = (projectId: string = 'sentinel') => {
     return null;
   }
 
+  const segments = (config.key || "").split(".");
+  if (segments.length !== 3) {
+    console.error(`[ADMIN_DEBUG] Project ${projectId} has invalid JWT segments: ${segments.length}`);
+  }
+
   clients[projectId] = createClient(config.url, config.key, {
     auth: {
       autoRefreshToken: false,
