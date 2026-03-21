@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { StatusCard } from "@/components/ui/StatusCard";
+import { InfraMap } from "@/components/ui/InfraMap";
+import { DatabasePanel } from "@/components/ui/DatabasePanel";
 import { PROJECTS } from "@/constants/projects";
-import { Shield, LayoutDashboard, Activity, Database } from "lucide-react";
+import { Shield, LayoutDashboard, Activity, Database, Network, Server } from "lucide-react";
 
 interface ServiceHealth {
   status: "online" | "offline" | "checking";
@@ -81,8 +83,18 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Stats Grid */}
-      <section className="max-w-7xl mx-auto mb-12">
+      {/* TOPOLOGY SECTION */}
+      <section className="max-w-7xl mx-auto mb-16">
+        <div className="flex items-center gap-2 mb-6 text-slate-400 group cursor-help">
+          <Network className="w-5 h-5 text-sentinel group-hover:scale-110 transition-transform" />
+          <h2 className="text-xl font-bold uppercase tracking-widest leading-none">Global Architecture</h2>
+          <span className="text-[10px] font-mono ml-4 opacity-50 border-l border-white/10 pl-4 uppercase">Live Topology</span>
+        </div>
+        <InfraMap healthData={healthData} />
+      </section>
+
+      {/* Stats Grid Section */}
+      <section className="max-w-7xl mx-auto mb-16">
         <div className="flex items-center gap-2 mb-6">
           <LayoutDashboard className="w-5 h-5 text-sentinel" />
           <h2 className="text-xl font-bold uppercase tracking-widest text-slate-300">Health Radar</h2>
@@ -102,7 +114,16 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Future Modules Placeholder */}
+      {/* INFRASTRUCTURE DEEP DIVE */}
+      <section className="max-w-7xl mx-auto mb-16">
+        <div className="flex items-center gap-2 mb-6">
+          <Server className="w-5 h-5 text-sentinel" />
+          <h2 className="text-xl font-bold uppercase tracking-widest text-slate-300">Database Ecosystem</h2>
+        </div>
+        <DatabasePanel healthData={healthData} />
+      </section>
+
+      {/* Footer Section */}
       <footer className="max-w-7xl mx-auto mt-24 pt-12 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4 text-slate-500 text-sm">
         <p>© 2026 Sentinel SRE - Dashboard de Ingeniería</p>
         <div className="flex gap-6 italic font-mono uppercase tracking-tighter">
@@ -111,7 +132,7 @@ export default function Home() {
             Telemetry: ACTIVE
           </span>
           <span>Latency Tracker: Pending</span>
-          <span>Infra Map: Pending</span>
+          <span>Infra Map: Online</span>
         </div>
       </footer>
     </main>
