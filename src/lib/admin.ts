@@ -9,13 +9,25 @@ import { createClient } from "@supabase/supabase-js";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 
-if (!supabaseUrl || !supabaseServiceRoleKey) {
-  console.warn("Supabase Admin credentials missing for Phase 9.");
-}
+// Lazy initialization to prevent build-time crashes
+let adminClient: any = null;
 
-export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false,
-  },
-});
+export const getSupabaseAdmin = () => {
+  if (adminClient) return adminClient;
+
+  if (!supabaseUrl || !supabaseServiceRoleKey) {
+    if (process.env.NODE_ENV === "production") {
+      console.warn("SUPABASE_SERVICE_ROLE_KEY is missing in production environment.");
+    }
+    return null;
+  }
+
+  adminClient = createClient(supabaseUrl, supabaseServiceRoleKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
+
+  return adminClient;
+};

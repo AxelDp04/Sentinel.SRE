@@ -1,8 +1,14 @@
 import { NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/admin";
+import { getSupabaseAdmin } from "@/lib/admin";
 
 export async function POST() {
   try {
+    const supabaseAdmin = getSupabaseAdmin();
+
+    if (!supabaseAdmin) {
+      return NextResponse.json({ error: "Emergency actions unavailable (Missing Credentials)" }, { status: 503 });
+    }
+
     // Audit Logging before action
     await supabaseAdmin.from("service_logs").insert({
       service_id: "sentinel-sheriff",
@@ -15,9 +21,6 @@ export async function POST() {
     const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers();
     if (listError) throw listError;
 
-    // Supabase does not have a single "logout all" for every user at once,
-    // so we iterate through users and invalidate their sessions/JWTs.
-    // In a production environment with thousands of users, this would be a background job.
     for (const user of users) {
       await supabaseAdmin.auth.admin.signOut(user.id, "global");
     }
