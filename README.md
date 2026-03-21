@@ -1,36 +1,29 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🛡️ Sentinel SRE Dashboard
 
-## Getting Started
+**Sentinel SRE** es un Ecosistema de Monitoreo Centralizado diseñado para supervisar la salud, el rendimiento y la disponibilidad de infraestructuras digitales críticas, incluyendo **ARQOVEX**, **AuditaCar RD**, y **AgentScout**. 
 
-First, run the development server:
+No es solo una aplicación web; es una herramienta de ingeniería robusta diseñada para garantizar que los servicios estén siempre activos y operativos mediante una vigilancia proactiva.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 🚀 Objetivos Principales
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+*   **Vigilancia 24/7:** Realiza chequeos automáticos (pings) a las aplicaciones para detectar caídas antes que los usuarios.
+*   **Centralización de Métricas:** Visualización unificada del comportamiento de bases de datos en Neon (AuditaCar) y Supabase (ARQOVEX).
+*   **Reducción de MTTR (Mean Time To Repair):** Notificaciones inmediatas ante fallos para una acción rápida.
+*   **Ingeniería de Confiabilidad:** Implementación de principios de SRE (Site Reliability Engineering) para garantizar sistemas resilientes.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🛠️ Stack Tecnológico
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+*   **Frontend:** Next.js 14 (App Router) con TypeScript.
+*   **UI/UX:** Tailwind CSS con estética **Cyberpunk / Glassmorphism**.
+*   **Backend:** Supabase (Database & Edge Functions para monitoreo).
+*   **Integración:** Vercel APIs para el estado de los despliegues.
 
-## Learn More
+## 📊 Módulos del Dashboard
 
-To learn more about Next.js, take a look at the following resources:
+1.  **Health Radar:** Panel con tarjetas "Live" del estado de los proyectos.
+2.  **Latency Tracker:** Gráficos de tiempo de respuesta de servidores.
+3.  **Infrastructure Map:** Esquema visual de conexiones entre apps y bases de datos.
+4.  **Admin Command Center:** Ejecución de tareas de mantenimiento (Cache, DB restarts).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+*Desarrollado con enfoque en Ingeniería de Confiabilidad de Sitios (SRE).*
