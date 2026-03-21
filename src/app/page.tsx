@@ -86,6 +86,7 @@ export default function Home() {
         { time: "12:00", latency: 45, service: "arqovex" },
         { time: "13:00", latency: 62, service: "auditacar" },
         { time: "14:00", latency: 55, service: "agentscout" },
+        { time: "15:00", latency: 48, service: "agentscout" },
       ];
       setLatencyHistory(mockPoints);
     }
