@@ -5,11 +5,11 @@ import { Globe, Users, Activity, ExternalLink, ShieldCheck, ShieldAlert } from "
 import { PROJECTS } from "@/constants/projects";
 
 interface EcosystemTableProps {
-  healthData: Record<string, { status: string; latency?: number }>;
-  users: any[];
+  healthData?: Record<string, { status: string; latency?: number }>;
+  users?: any[];
 }
 
-export const EcosystemTable = ({ healthData, users }: EcosystemTableProps) => {
+export const EcosystemTable = ({ healthData = {}, users = [] }: EcosystemTableProps) => {
   return (
     <div className="glass bg-slate-900/60 border-white/5 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="p-4 border-b border-white/5 bg-white/5 flex items-center justify-between">
@@ -24,7 +24,7 @@ export const EcosystemTable = ({ healthData, users }: EcosystemTableProps) => {
       </div>
       
       <table className="w-full text-left text-[11px] font-mono border-collapse">
-        <thead className="bg-black/20 text-slate-500">
+        <thead className="bg-[#0f172a]/80 text-slate-500">
           <tr>
             <th className="px-6 py-4 border-b border-white/5 uppercase tracking-widest font-bold">Proyecto</th>
             <th className="px-6 py-4 border-b border-white/5 uppercase tracking-widest font-bold">Estado (Web)</th>
@@ -34,8 +34,8 @@ export const EcosystemTable = ({ healthData, users }: EcosystemTableProps) => {
         </thead>
         <tbody className="divide-y divide-white/5">
           {PROJECTS.map((project) => {
-            const status = healthData[project.id]?.status || 'checking';
-            const projectUsers = users.filter(u => u.project === project.id && u.is_live);
+            const status = (healthData as any)?.[project.id]?.status || 'checking';
+            const projectUsers = (users || []).filter(u => u.project === project.id && u.is_live);
             
             return (
               <tr key={project.id} className="hover:bg-white/5 transition-colors group">

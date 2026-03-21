@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
 import { DashboardStats } from "@/components/ui/DashboardStats";
@@ -16,21 +16,56 @@ import { TrafficChart } from "@/components/ui/TrafficChart";
 import { TermDebug } from "@/components/ui/TermDebug";
 import { Gatekeeper } from "@/components/ui/Gatekeeper";
 import { getStoredAdminKey, isValidAdminKey } from "@/lib/auth";
+import { PROJECTS } from "@/constants/projects";
 
 export default function Home() {
   const [isSafeMode, setIsSafeMode] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [adminKey, setAdminKey] = useState<string | null>(null);
   const [booting, setBooting] = useState(true);
+  
+  // Central Data State
+  const [users, setUsers] = useState<any[]>([]);
+  const [healthData, setHealthData] = useState<Record<string, any>>({});
+  const [loading, setLoading] = useState(true);
+
+  const fetchEcosystemData = useCallback(async (key: string) => {
+    try {
+      // 1. Fetch Users
+      const userRes = await fetch("/api/admin/users", {
+        headers: { "X-Admin-Key": key }
+      });
+      if (userRes.status === 401) return;
+      const userData = await userRes.json();
+      if (userData.users) setUsers(userData.users);
+
+      // 2. Fetch/Simulate Health (Simulated for this view, but could be fetch)
+      const health: Record<string, any> = {};
+      PROJECTS.forEach(p => {
+        health[p.id] = {
+           status: p.id === 'arqovex' ? 'online' : (Math.random() > 0.1 ? 'online' : 'offline'),
+           latency: Math.floor(Math.random() * 40) + 10
+        };
+      });
+      setHealthData(health);
+    } catch (err) {
+      console.error("Failed to sync ecosystem telemetry");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     const key = getStoredAdminKey();
     if (isValidAdminKey(key)) {
       setIsAuthenticated(true);
       setAdminKey(key);
+      fetchEcosystemData(key);
+      const interval = setInterval(() => fetchEcosystemData(key), 30000);
+      return () => clearInterval(interval);
     }
     setBooting(false);
-  }, []);
+  }, [fetchEcosystemData]);
 
   if (booting) return <div className="min-h-screen bg-black" />;
 
@@ -38,6 +73,7 @@ export default function Home() {
     return <Gatekeeper onAccessGranted={(key) => {
       setAdminKey(key);
       setIsAuthenticated(true);
+      fetchEcosystemData(key);
     }} />;
   }
 
@@ -55,7 +91,7 @@ export default function Home() {
             {/* Upper Tactical Section: Real-Time Monitoring */}
             <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
               <div className="xl:col-span-3">
-                <DashboardStats />
+                <DashboardStats users={users} />
               </div>
               <div className="xl:col-span-1">
                 <SafeModeLock isLocked={isSafeMode} />
@@ -66,11 +102,15 @@ export default function Home() {
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
               <div className="xl:col-span-1 space-y-6">
                 <HealthRadar />
-                <ActionCenter isSafeMode={isSafeMode} />
+                <ActionCenter 
+                  safeMode={isSafeMode} 
+                  setSafeMode={setIsSafeMode} 
+                  onForceRefresh={() => adminKey && fetchEcosystemData(adminKey)} 
+                />
               </div>
               <div className="xl:col-span-2 space-y-6">
                 <ServiceStatus />
-                <TrafficChart />
+                <TrafficChart data={users} />
               </div>
             </div>
 
@@ -82,7 +122,7 @@ export default function Home() {
                  <div className="h-px flex-1 bg-gradient-to-r from-white/10 via-transparent to-transparent"></div>
               </div>
               
-              <EcosystemTable />
+              <EcosystemTable healthData={healthData} users={users} />
               
               {!isSafeMode && (
                 <div className="animate-in slide-in-from-bottom-5 duration-500">
