@@ -1,22 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkServiceHealth } from "@/lib/monitor";
+import { supabase } from "@/lib/supabase";
 
-/**
- * API Proxy to bypass CORS and perform health checks from the server side.
- */
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const url = searchParams.get("url");
+  const serviceId = searchParams.get("id"); // Added serviceId for logging
 
   if (!url) {
     return NextResponse.json({ error: "Missing 'url' parameter" }, { status: 400 });
   }
 
   try {
-    // Basic URL validation
-    new URL(url);
-    
     const result = await checkServiceHealth(url);
+    
+    // ASYNC LOGGING TO SUPABASE (Don't await fully to keep proxy fast)
+    if (serviceId) {
+       supabase.from("service_logs").insert([{
+        service_id: serviceId,
+        status: result.status,
+        latency: result.latency,
+        status_code: result.statusCode,
+        error_message: result.error,
+        level: result.status === "online" ? "INFO" : "CRITICAL"
+      }]).then(({ error }) => {
+        if (error) console.error("Telemetry Logging Error:", error.message);
+      });
+    }
     
     return NextResponse.json(result);
   } catch {

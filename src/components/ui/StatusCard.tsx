@@ -9,6 +9,7 @@ interface StatusCardProps {
   description: string;
   status: "online" | "offline" | "checking";
   latency?: number;
+  uptime?: number;
   iconName: keyof typeof LucideIcons;
 }
 
@@ -17,6 +18,7 @@ export const StatusCard = ({
   description,
   status,
   latency,
+  uptime,
   iconName,
 }: StatusCardProps) => {
   const Icon = LucideIcons[iconName] as LucideIcon;
@@ -49,12 +51,23 @@ export const StatusCard = ({
       <h3 className="text-xl font-bold mb-1 text-white">{name}</h3>
       <p className="text-sm text-slate-400 mb-4 line-clamp-2">{description}</p>
 
-      {latency !== undefined && (
-        <div className="flex items-center gap-2 mt-auto">
-          <LucideIcons.Activity className="w-4 h-4 text-slate-500" />
-          <span className="text-xs font-mono text-sentinel">{latency}ms</span>
-        </div>
-      )}
+      <div className="flex items-center justify-between mt-auto pt-4 border-t border-white/5 border-dashed">
+        {latency !== undefined && (
+          <div className="flex items-center gap-2">
+            <LucideIcons.Activity className="w-4 h-4 text-slate-500" />
+            <span className="text-xs font-mono text-sentinel">{latency}ms</span>
+          </div>
+        )}
+        
+        {uptime !== undefined && (
+          <div className="flex flex-col items-end">
+            <span className="text-[10px] text-slate-500 uppercase font-mono tracking-tighter">Uptime 24h</span>
+            <span className={`text-xs font-mono font-bold ${uptime > 99 ? "text-sentinel" : "text-yellow-400"}`}>
+              {uptime.toFixed(1)}%
+            </span>
+          </div>
+        )}
+      </div>
 
       {/* Border gradient effect */}
       <div className="absolute inset-0 border border-white/5 rounded-xl pointer-events-none group-hover:border-sentinel/20 transition-colors duration-500"></div>

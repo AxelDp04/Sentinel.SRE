@@ -6,6 +6,7 @@ import { InfraMap } from "@/components/ui/InfraMap";
 import { DatabasePanel } from "@/components/ui/DatabasePanel";
 import { PROJECTS } from "@/constants/projects";
 import { Shield, LayoutDashboard, Activity, Database, Network, Server } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 interface ServiceHealth {
   status: "online" | "offline" | "checking";
@@ -20,9 +21,11 @@ export default function Home() {
     }), {})
   );
 
+  const [uptimeData, setUptimeData] = useState<Record<string, number>>({});
+
   const checkHealth = async (id: string, url: string) => {
     try {
-      const res = await fetch(`/api/proxy-check?url=${encodeURIComponent(url)}`);
+      const res = await fetch(`/api/proxy-check?url=${encodeURIComponent(url)}&id=${id}`);
       if (!res.ok) throw new Error("Fetch failed");
       const data = await res.json();
       
@@ -41,8 +44,38 @@ export default function Home() {
     }
   };
 
+  const fetchUptime = async () => {
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    
+    const { data, error } = await supabase
+      .from("service_logs")
+      .select("service_id, status")
+      .gte("created_at", twentyFourHoursAgo);
+
+    if (error) {
+      console.error("Error fetching uptime:", error.message);
+      return;
+    }
+
+    const stats: Record<string, { total: number; online: number }> = {};
+    data.forEach(log => {
+      if (!stats[log.service_id]) stats[log.service_id] = { total: 0, online: 0 };
+      stats[log.service_id].total++;
+      if (log.status === "online") stats[log.service_id].online++;
+    });
+
+    const calculatedUptime: Record<string, number> = {};
+    PROJECTS.forEach(project => {
+      const s = stats[project.id];
+      calculatedUptime[project.id] = s ? (s.online / s.total) * 100 : 100; // Default to 100 if no logs
+    });
+
+    setUptimeData(calculatedUptime);
+  };
+
   const updateAll = () => {
     PROJECTS.forEach(p => checkHealth(p.id, p.url));
+    fetchUptime();
   };
 
   useEffect(() => {
@@ -108,7 +141,8 @@ export default function Home() {
               description={project.description}
               status={healthData[project.id]?.status || "checking"}
               latency={healthData[project.id]?.latency}
-              iconName={project.icon}
+              uptime={uptimeData[project.id]}
+              iconName={project.icon as any}
             />
           ))}
         </div>
@@ -131,7 +165,7 @@ export default function Home() {
             <span className="w-1.5 h-1.5 rounded-full bg-sentinel/50 animate-pulse"></span>
             Telemetry: ACTIVE
           </span>
-          <span>Latency Tracker: Pending</span>
+          <span>Watchman: Autonomous</span>
           <span>Infra Map: Online</span>
         </div>
       </footer>
