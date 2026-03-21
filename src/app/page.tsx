@@ -7,8 +7,9 @@ import { DatabasePanel } from "@/components/ui/DatabasePanel";
 import { LatencyChart } from "@/components/ui/LatencyChart";
 import { ActionCenter } from "@/components/ui/ActionCenter";
 import { TerminalSimulator } from "@/components/ui/TerminalSimulator";
+import { SheriffPanel } from "@/components/ui/SheriffPanel";
 import { PROJECTS } from "@/constants/projects";
-import { Shield, LayoutDashboard, Activity, Database, Network, Server, TrendingUp, Zap, Terminal } from "lucide-react";
+import { Shield, LayoutDashboard, Activity, Database, Network, Server, TrendingUp, Zap, Terminal, ShieldAlert } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 interface ServiceHealth {
@@ -23,6 +24,7 @@ interface LatencyPoint {
 }
 
 export default function Home() {
+  const [safeMode, setSafeMode] = useState(true);
   const [healthData, setHealthData] = useState<Record<string, ServiceHealth>>(
     PROJECTS.reduce((acc, project) => ({
       ...acc,
@@ -80,7 +82,6 @@ export default function Home() {
 
       setLatencyHistory(formattedData);
     } catch {
-      // Mock Data Fallback for Build/Failure
       const mockPoints = [
         { time: "12:00", latency: 45, service: "arqovex" },
         { time: "13:00", latency: 62, service: "auditacar" },
@@ -116,7 +117,6 @@ export default function Home() {
 
       setUptimeData(calculatedUptime);
     } catch {
-      // Mock Uptime Fallback
       PROJECTS.forEach(p => {
         setUptimeData(prev => ({ ...prev, [p.id]: 99.9 }));
       });
@@ -156,13 +156,19 @@ export default function Home() {
         </div>
 
         <div className="flex gap-4 overflow-x-auto pb-2 md:pb-0 no-scrollbar">
-          <div className="glass px-4 py-2 flex items-center gap-2 shrink-0">
+          <div className="glass px-4 py-2 flex items-center gap-2 shrink-0 border-sentinel/20">
             <Activity className="w-4 h-4 text-sentinel" />
             <span className="text-[10px] font-mono text-sentinel tracking-tighter uppercase">Watchman: Active</span>
           </div>
-          <div className="glass px-4 py-2 flex items-center gap-2 shrink-0">
-            <Database className="w-4 h-4 text-sentinel" />
-            <span className="text-[10px] font-mono text-sentinel tracking-tighter uppercase">Sync: Optimal</span>
+          <div className="glass px-4 py-2 flex items-center gap-2 shrink-0 border-blue-500/20">
+            <Database className="w-4 h-4 text-blue-400" />
+            <span className="text-[10px] font-mono text-blue-400 tracking-tighter uppercase">Sync: Optimal</span>
+          </div>
+          <div className={`glass px-4 py-2 flex items-center gap-2 shrink-0 transition-all duration-500 ${!safeMode ? 'border-red-500/50 bg-red-500/5 shadow-[0_0_10px_rgba(239,68,68,0.2)]' : 'border-slate-500/20'}`}>
+            <ShieldAlert className={`w-4 h-4 ${!safeMode ? 'text-red-500 animate-pulse' : 'text-slate-500'}`} />
+            <span className={`text-[10px] font-mono tracking-tighter uppercase ${!safeMode ? 'text-red-500 font-bold' : 'text-slate-500'}`}>
+              Mode: {!safeMode ? 'SHERIFF' : 'GUARD'}
+            </span>
           </div>
         </div>
       </header>
@@ -202,8 +208,23 @@ export default function Home() {
           <Zap className="w-5 h-5 text-sentinel" />
           <h2 className="text-lg md:text-xl font-bold uppercase tracking-widest text-slate-300">Command Center</h2>
         </div>
-        <ActionCenter onForceRefresh={updateAll} />
+        <ActionCenter 
+          onForceRefresh={updateAll} 
+          safeMode={safeMode} 
+          setSafeMode={setSafeMode} 
+        />
       </section>
+
+      {/* SHERIFF PANEL - USER SESSION CONTROL */}
+      {!safeMode && (
+        <section className="max-w-7xl mx-auto mb-16 animate-in slide-in-from-bottom-5 duration-700">
+          <div className="flex items-center gap-2 mb-6">
+            <ShieldAlert className="w-5 h-5 text-red-500" />
+            <h2 className="text-lg md:text-xl font-bold uppercase tracking-widest text-red-500/80">User Session Control</h2>
+          </div>
+          <SheriffPanel />
+        </section>
+      )}
 
       {/* Stats Grid Section */}
       <section className="max-w-7xl mx-auto mb-16">

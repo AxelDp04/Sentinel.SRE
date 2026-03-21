@@ -23,10 +23,11 @@ interface Activity {
 
 interface ActionCenterProps {
   onForceRefresh: () => void;
+  safeMode: boolean;
+  setSafeMode: (val: boolean) => void;
 }
 
-export const ActionCenter = ({ onForceRefresh }: ActionCenterProps) => {
-  const [safeMode, setSafeMode] = useState(true);
+export const ActionCenter = ({ onForceRefresh, safeMode, setSafeMode }: ActionCenterProps) => {
   const [activities, setActivities] = useState<Activity[]>([
     { id: "1", user: "Axel", action: "System Initialization", time: "10:00 AM", type: "success" },
   ]);
