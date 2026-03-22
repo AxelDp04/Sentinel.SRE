@@ -68,9 +68,9 @@ export const ActionCenter = ({ onForceRefresh, safeMode, setSafeMode }: ActionCe
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
       {/* Control Panel */}
-      <div className="lg:col-span-2 glass p-6 flex flex-col">
+      <div className="xl:col-span-2 glass p-8 flex flex-col rounded-2xl border border-white/5 shadow-2xl bg-slate-900/60 backdrop-blur-md">
         <div className="flex justify-between items-center mb-8">
           <div className="flex items-center gap-3">
             <Zap className="w-5 h-5 text-sentinel" />
@@ -90,12 +90,12 @@ export const ActionCenter = ({ onForceRefresh, safeMode, setSafeMode }: ActionCe
           </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 h-full">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 h-full mt-4">
           {/* Action: Force Refresh */}
           <button 
             disabled={loadingAction !== null}
             onClick={() => handleAction("Force Health Check", onForceRefresh)}
-            className="flex flex-col items-center justify-center gap-3 p-4 glass hover:bg-white/5 transition-all group disabled:opacity-30 disabled:cursor-not-allowed border-none ring-1 ring-white/10 hover:ring-sentinel/50"
+            className="flex flex-col items-center justify-center gap-4 p-6 glass rounded-xl hover:bg-white/10 transition-all group disabled:opacity-30 disabled:cursor-not-allowed border border-white/10 hover:border-sentinel/50 shadow-lg"
           >
             <RefreshCw className={`w-6 h-6 ${loadingAction === "Force Health Check" ? "animate-spin text-sentinel" : "text-slate-400 group-hover:text-sentinel transition-colors"}`} />
             <span className="text-[9px] font-mono uppercase tracking-widest text-slate-400 group-hover:text-white">Force Refresh</span>
@@ -105,7 +105,7 @@ export const ActionCenter = ({ onForceRefresh, safeMode, setSafeMode }: ActionCe
           <button 
             disabled={safeMode || loadingAction !== null}
             onClick={() => handleAction("Purge Vercel Cache")}
-            className="flex flex-col items-center justify-center gap-3 p-4 glass hover:bg-white/5 transition-all group disabled:opacity-30 disabled:cursor-not-allowed border-none ring-1 ring-white/10 hover:ring-yellow-500/50"
+            className="flex flex-col items-center justify-center gap-4 p-6 glass rounded-xl hover:bg-white/10 transition-all group disabled:opacity-30 disabled:cursor-not-allowed border border-white/10 hover:border-yellow-500/50 shadow-lg"
           >
             <Trash2 className={`w-6 h-6 ${loadingAction === "Purge Vercel Cache" ? "animate-bounce text-yellow-400" : "text-slate-400 group-hover:text-yellow-400 transition-colors"}`} />
             <span className="text-[9px] font-mono uppercase tracking-widest text-slate-400 group-hover:text-white">Purge Cache</span>
@@ -115,7 +115,7 @@ export const ActionCenter = ({ onForceRefresh, safeMode, setSafeMode }: ActionCe
           <button 
             disabled={safeMode || loadingAction !== null}
             onClick={() => handleAction("Database Vacuum")}
-            className="flex flex-col items-center justify-center gap-3 p-4 glass hover:bg-white/5 transition-all group disabled:opacity-30 disabled:cursor-not-allowed border-none ring-1 ring-white/10 hover:ring-blue-500/50"
+            className="flex flex-col items-center justify-center gap-4 p-6 glass rounded-xl hover:bg-white/10 transition-all group disabled:opacity-30 disabled:cursor-not-allowed border border-white/10 hover:border-blue-500/50 shadow-lg"
           >
             <ShieldAlert className={`w-6 h-6 ${loadingAction === "Database Vacuum" ? "animate-pulse text-blue-400" : "text-slate-400 group-hover:text-blue-400 transition-colors"}`} />
             <span className="text-[9px] font-mono uppercase tracking-widest text-slate-400 group-hover:text-white">DB Vacuum</span>
@@ -125,7 +125,7 @@ export const ActionCenter = ({ onForceRefresh, safeMode, setSafeMode }: ActionCe
           <button 
             disabled={safeMode || loadingAction !== null}
             onClick={() => handleAction("Emergency Rollback")}
-            className="flex flex-col items-center justify-center gap-3 p-4 glass bg-red-500/5 hover:bg-red-500/10 transition-all group disabled:opacity-30 disabled:cursor-not-allowed border-none ring-1 ring-red-500/20 hover:ring-red-500/50"
+            className="flex flex-col items-center justify-center gap-4 p-6 glass rounded-xl bg-red-500/5 hover:bg-red-500/15 transition-all group disabled:opacity-30 disabled:cursor-not-allowed border border-red-500/20 hover:border-red-500/50 shadow-lg"
           >
             <RotateCcw className={`w-6 h-6 ${loadingAction === "Emergency Rollback" ? "animate-spin text-red-500" : "text-red-400/70 group-hover:text-red-500 transition-colors"}`} />
             <span className="text-[9px] font-mono uppercase tracking-widest text-red-400/70 group-hover:text-red-500 font-bold whitespace-nowrap">Emergency Rollback</span>
@@ -134,13 +134,13 @@ export const ActionCenter = ({ onForceRefresh, safeMode, setSafeMode }: ActionCe
       </div>
 
       {/* Audit Logs */}
-      <div className="glass p-6 flex flex-col h-full bg-slate-900/40">
+      <div className="glass p-8 flex flex-col h-full rounded-2xl border border-white/5 bg-slate-900/60 backdrop-blur-md shadow-2xl">
         <div className="flex items-center gap-3 mb-6">
           <Clock className="w-5 h-5 text-slate-500" />
           <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-slate-400">Tactical Audit</h3>
         </div>
 
-        <div className="space-y-4 overflow-y-auto max-h-[200px] pr-2 custom-scrollbar">
+        <div className="space-y-6 overflow-y-auto max-h-[250px] pr-4 custom-scrollbar mt-2">
           {activities.map((activity) => (
             <div key={activity.id} className="flex gap-3 text-[10px] items-start border-l border-white/5 pl-3 py-1">
               <div className="mt-1">
