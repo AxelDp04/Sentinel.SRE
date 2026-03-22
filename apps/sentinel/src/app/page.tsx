@@ -154,7 +154,7 @@ export default function Home() {
                 </div>
                 
                 <div className="xl:col-span-4">
-                   <NexusLiveMonitor />
+                   <NexusLiveMonitor adminKey={adminKey} />
                 </div>
               </div>
               

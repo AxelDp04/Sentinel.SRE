@@ -12,55 +12,51 @@ interface NexusTask {
   ai_output: any;
 }
 
-export function NexusLiveMonitor() {
+export function NexusLiveMonitor({ adminKey }: { adminKey: string | null }) {
   const [tasks, setTasks] = useState<NexusTask[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // DIAGNÓSTICO DE CONEXIÓN (AXEL)
-    console.log("[NEXUS] Cliente conectado:", !!supabase);
+    console.log("[NEXUS] Local API Proxy Active:", !!adminKey);
 
-    // 1. Fetch initial active/recent tasks
-    const fetchTasks = async () => {
-      const { data } = await supabase
-        .from("nexus_tasks")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(5);
-
-      if (data) setTasks(data);
+    const fetchTasksFromApi = async () => {
+      try {
+        const response = await fetch("/api/admin/incidents", {
+          headers: { "X-Admin-Key": adminKey || "" }
+        });
+        const data = await response.json();
+        if (data.incidents) {
+          setTasks(data.incidents);
+        }
+      } catch (err) {
+        console.error("Failed to fetch Nexus incidents via local API:", err);
+      }
     };
 
-    fetchTasks();
+    fetchTasksFromApi();
+    
+    // Polling as fallback/primary if requested
+    const interval = setInterval(fetchTasksFromApi, 5000);
 
-    // 2. Subscribe to realtime changes
+    // 2. Subscribe to realtime changes (Optional but maintained for speed)
     const subscription = supabase
       .channel("nexus_tasks_changes")
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "nexus_tasks" },
         (payload) => {
-          setTasks((current) => {
-            const newTask = payload.new as NexusTask;
-            const updatedTasks = [...current];
-            const index = updatedTasks.findIndex((t) => t.id === newTask.id);
-
-            if (index !== -1) {
-              updatedTasks[index] = newTask; // Update existing
-            } else {
-              updatedTasks.unshift(newTask); // Add new at top
-            }
-
-            return updatedTasks.slice(0, 5); // Keep top 5
-          });
+          console.log("[NEXUS] Realtime update received");
+          fetchTasksFromApi(); // Re-fetch from API to stay in sync with proxy
         }
       )
       .subscribe();
 
     return () => {
+      clearInterval(interval);
       supabase.removeChannel(subscription);
     };
-  }, []);
+  }, [adminKey]);
 
   // Auto-scroll to bottom of logs
   useEffect(() => {
