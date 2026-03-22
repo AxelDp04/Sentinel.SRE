@@ -22,12 +22,15 @@ else:
         print(f"❌ Error connecting to Supabase: {e}")
 
 def get_pending_tasks():
-    if not supabase: return []
+    if not supabase: 
+        print("⚠️ database.py: Supabase client NOT initialized.")
+        return []
     try:
+        # Filtro estricto en minúsculas como pidió Axel
         response = supabase.table("nexus_tasks").select("*").eq("status", "pending").execute()
         return response.data
     except Exception as e:
-        print(f"Error fetching tasks: {e}")
+        print(f"❌ Error fetching tasks from Supabase: {e}")
         return []
 
 def update_task_status(task_id: str, status: str):

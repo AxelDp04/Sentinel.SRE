@@ -11,8 +11,13 @@ is_polling = False
 async def poll_supabase():
     global is_polling
     print(f"[*] Motor encendido. Esperando incidentes de Sentinel...")
+    iteration = 0
     while is_polling:
         try:
+            # Heartbeat cada 10 segundos (2 iteraciones de 5s)
+            if iteration % 2 == 0:
+                print(f"[*] Buscando tareas pendientes en Supabase (status: 'pending')...")
+            
             tasks = get_pending_tasks()
             if tasks:
                 for task in tasks:
@@ -20,7 +25,6 @@ async def poll_supabase():
                     project_name = task["project_name"]
                     error_desc = task["error_description"]
                     
-                    # LOG DE DIAGNÓSTICO PARA RAILWAY
                     print(f"\n[DEBUG] New task detected: {task_id} for project {project_name}")
                     
                     # Update status to analyzing
@@ -49,14 +53,12 @@ async def poll_supabase():
                         
                     update_task_resolved(task_id, final_state["final_output"])
                     print(f"[{task_id}] [Updating Supabase] Resultado inyectado y resuelto.\n")
-            else:
-                # No tasks found, engine is idling
-                pass
-                
+            
         except Exception as e:
             print(f"❌ Error during polling loop: {e}")
             
-        await asyncio.sleep(3)  # Poll every 3 seconds for faster response
+        iteration += 1
+        await asyncio.sleep(5)  # Poll every 5 seconds as requested by Axel
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
