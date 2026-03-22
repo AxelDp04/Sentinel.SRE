@@ -9,14 +9,19 @@ load_dotenv()
 # We can switch between Groq and Gemini easily
 USE_GEMINI = os.getenv("GEMINI_API_KEY") is not None
 
+# Model selection is now 100% dynamic via environment variables
+MODEL_NAME = os.getenv("MODEL_NAME")
+
 if USE_GEMINI:
     from langchain_google_genai import ChatGoogleGenerativeAI
-    llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash")
+    effective_model = MODEL_NAME or "gemini-1.5-flash"
+    llm = ChatGoogleGenerativeAI(model=effective_model)
+    print(f"[*] Nexus Engine using Gemini Model: {effective_model}")
 else:
     from langchain_groq import ChatGroq
-    # Use the MODEL_NAME from environment variables, fallback to stable versatile
-    model_name = os.getenv("MODEL_NAME", "llama-3.3-70b-versatile")
-    llm = ChatGroq(model=model_name)
+    effective_model = MODEL_NAME or "llama-3.3-70b-versatile"
+    llm = ChatGroq(model=effective_model)
+    print(f"[*] Nexus Engine using Groq Model: {effective_model}")
 
 class NexusState(TypedDict):
     task_id: str
