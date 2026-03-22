@@ -1,0 +1,15 @@
+{
+  "/_not-found/page": "app/_not-found/page.js",
+  "/api/admin/healing/route": "app/api/admin/healing/route.js",
+  "/api/admin/health/route": "app/api/admin/health/route.js",
+  "/api/admin/incidents/route": "app/api/admin/incidents/route.js",
+  "/api/admin/users/[id]/activity/route": "app/api/admin/users/[id]/activity/route.js",
+  "/api/admin/users/route": "app/api/admin/users/route.js",
+  "/api/admin/users/[id]/actions/route": "app/api/admin/users/[id]/actions/route.js",
+  "/api/admin/whatsapp/report/route": "app/api/admin/whatsapp/report/route.js",
+  "/favicon.ico/route": "app/favicon.ico/route.js",
+  "/api/admin/logout-all/route": "app/api/admin/logout-all/route.js",
+  "/api/proxy-check/route": "app/api/proxy-check/route.js",
+  "/icon.png/route": "app/icon.png/route.js",
+  "/page": "app/page.js"
+}

@@ -1,58 +1,64 @@
-# 🛡️ Sentinel SRE: Infrastructure Command Center
+# 🚀 Nexus Sentinel Ecosystem
+> "La infraestructura que no solo vigila, sino que resuelve."
 
-[![Build Status](https://img.shields.io/badge/Build-Passing-10b981?style=for-the-badge&logo=next.js)](https://github.com/AxelDp04/Sentinel.SRE)
-[![SRE Status](https://img.shields.io/badge/Watchman-Autonomous-blue?style=for-the-badge&logo=supabase)](https://github.com/AxelDp04/Sentinel.SRE)
-[![Architecture](https://img.shields.io/badge/Architecture-Tactical-amber?style=for-the-badge)](https://github.com/AxelDp04/Sentinel.SRE)
-
-**Sentinel SRE** is an advanced engineering ecosystem designed for the centralized supervision of digital infrastructure health, performance, and availability. It acts as a tactical mission control for high-criticality applications like ARQOVEX and AuditaCar RD.
+Este es un ecosistema de **IA Agéntica aplicada a AIOps/DevOps** diseñado para crear infraestructuras *Zero-Maintenance*. Combina el monitoreo avanzado de **Sentinel** con el cerebro resolutivo de **Nexus**.
 
 ---
 
-## 🏛️ Engineering Architecture
+## 🏛️ Arquitectura del Monorepo
 
-The platform is built on a distributed monitoring philosophy, ensuring zero-bottleneck telemetry and persistent observability.
+```bash
+/apps
+  ├── /sentinel  # Dashboad de Observabilidad (Next.js 14 + Tailwind)
+  └── /nexus     # Motor de Agentes Autónomos (Python + LangGraph + Groq)
+```
 
-- **Frontend:** Next.js 14 (App Router) with a Cyberpunk-inspired Glassmorphism design system.
-- **Telemetry Engine:** High-precision latency measurement using `performance.now()` with automated CORS-proxy resolution.
-- **Persistence Layer:** Supabase PostgreSQL for storing high-resolution telemetry logs and mission-critical activity.
-- **Automation (The Watchman):** Supabase Edge Functions executing autonomous health checks every 15 minutes, independent of the dashboard state.
-- **Data Visualization:** Real-world trend analysis using Recharts, mapping 24h performance cycles.
+### 1. 👁️ Sentinel (The Eye)
+Panel de control visual que muestra el estado de salud de todos los proyectos (AuditaCar, ARQOVEX, etc.).
+- **Stack:** Next.js 14, Lucide Icons, React Flow (IA Nodes Visualization).
+- **Realtime:** Suscrito a eventos de Supabase para streaming de logs de la IA en vivo.
 
-## 🛠️ Technical Challenges & Solutions
-
-### 📡 Multi-Database Telemetry
-Managing observability across isolated platforms (**Neon.tech** for AuditaCar and **Supabase** for ARQOVEX) required a unified proxy layer. I implemented an API-based health-check system that bypasses CORS restrictions while measuring exact round-trip latency.
-
-### 🤖 Autonomous Observability
-To move beyond manual monitoring, I developed the **Watchman Engine**. Using Supabase Edge Functions and `pg_cron` concepts, the system maintains a 24/7 logging heartbeat, allowing the dashboard to calculate accurate **24h Uptime %** metrics even after long periods of inactivity.
-
-### 🗺️ Infrastructure Topology
-The **Infra Map** is a custom SVG-based visualization that reflects live system connectivity. It utilizes real-time state synchronization to animate data flows, providing immediate visual feedback of network health.
-
----
-
-## 🕹️ Command & Control
-The **Admin Command Center** provides a secured interface for:
-- **Purge Cache:** Instant Vercel asset invalidation.
-- **Force Refresh:** Manual telemetry override.
-- **DB Vacuum:** Database optimization triggers.
-- **Audit Logs:** Full traceability of administrative maneuvers.
+### 2. 🧠 Nexus (The Brain)
+Motor de multi-agentes que procesa incidentes detectados por Sentinel.
+- **Stack:** Python 3.11, LangGraph, Groq (Llama-3), Supabase (pgvector).
+- **Flujo de Agentes:**
+  - **SRE Senior:** Analiza errores y propone soluciones basadas en contexto histórico.
+  - **Security Auditor:** Valida que las soluciones no comprometan la seguridad.
 
 ---
 
-## 🏗️ Local Development
+## 🛠️ Guía de Inicio Rápido
 
-<details>
-<summary>Click to expand setup instructions</summary>
+### Requisitos Previos
+- Node.js 18+
+- Python 3.11+
+- Cuenta en Supabase y Groq (o Google Gemini)
 
-1. Clone the repository.
-2. Install dependencies: `npm install`.
-3. Configure environment variables in `.env.local` (see `.env.local.example`).
-4. Run the development server: `npm run dev`.
-5. For production build: `npm run build`.
+### Despliegue Local
+1. **Configuración de Variables:**
+   - Ve a `apps/nexus` y crea un `.env` basado en `.env.example`.
+   - Ve a `apps/sentinel` y crea un `.env.local` con tus claves de Supabase.
 
-</details>
+2. **Lanzar Nexus Engine:**
+   ```bash
+   cd apps/nexus
+   # Ejecuta el script de un solo clic
+   .\run_nexus.bat
+   ```
+
+3. **Lanzar Sentinel Dashboard:**
+   ```bash
+   cd apps/sentinel
+   npm install
+   npm run dev
+   ```
 
 ---
 
-*Designed and Engineered for Reliability.*
+## 🎯 Por qué este proyecto es Disruptivo
+- **Reducción de MTTR:** La IA propone y valida soluciones en segundos, no horas.
+- **Escalabilidad:** Arquitectura de agents preparada para añadir expertos en SEO, Performance o Costos.
+- **DevOps 2.0:** Uso real de IA Agéntica para la resolución autónoma de incidentes de infraestructura.
+
+---
+**Desarrollado para el HUB de Antigravity.** 🚀

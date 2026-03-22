@@ -1,0 +1,6 @@
+@echo off
+echo Iniciando entorno virtual de Nexus Engine...
+call venv\Scripts\activate
+echo Iniciando servidor FastAPI (Motor IA)...
+uvicorn main:app --reload
+pause
