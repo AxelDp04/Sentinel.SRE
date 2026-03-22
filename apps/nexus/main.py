@@ -54,34 +54,13 @@ async def poll_supabase():
                     update_task_resolved(task_id, final_state["final_output"])
                     print(f"[{task_id}] [Updating Supabase] Resultado inyectado y resuelto.\n")
 
-                    # [NEXUS VIGILANTE] - Notificación Proactiva a Axel Perez
-                    try:
-                        import requests
-                        sentinel_url = os.getenv("SENTINEL_API_URL") or os.getenv("NEXT_PUBLIC_SITE_URL") or "https://sentinel-dashboard.vercel.app"
-                        admin_key = os.getenv("ADMIN_KEY") or "AxelDp04"
-                        
-                        target_url = f"{sentinel_url.rstrip('/')}/api/admin/whatsapp/report"
-                        print(f"[{task_id}] [Vigilante Debug] Attempting report to: {target_url}")
-                        
-                        payload = {
-                            "isNexusReport": True,
-                            "incidentData": {
-                                "project_name": project_name,
-                                "error_description": error_desc,
-                                "solution": final_state["final_output"].get("solution", "Ver panel para detalles.")
-                            }
-                        }
-                        
-                        headers = { "X-Admin-Key": admin_key }
-                        response = requests.post(f"{sentinel_url}/api/admin/whatsapp/report", json=payload, headers=headers, timeout=10)
-                        
-                        if response.status_code == 200:
-                            print(f"[{task_id}] [Vigilante Active] WhatsApp report sent to Axel Perez via Vercel Proxy.")
-                        else:
-                            print(f"[{task_id}] [Vigilante Error] Failed to send report: {response.status_code} - {response.text}")
-                            
-                    except Exception as we:
-                        print(f"[{task_id}] [Vigilante Exception] Error calling WhatsApp API: {we}")
+                    # [NEXUS VIGILANTE] - Notificación Proactiva (Gatillo Autónomo)
+                    from services.whatsapp_service import send_report_to_vercel
+                    send_report_to_vercel(
+                        project_name=project_name,
+                        error_description=error_desc,
+                        solution=final_state["final_output"].get("solution", "Ver panel para detalles.")
+                    )
             
         except Exception as e:
             print(f"❌ Error during polling loop: {e}")
