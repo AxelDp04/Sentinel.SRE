@@ -12,7 +12,7 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized: Invalid Master Key" }, { status: 401 });
     }
 
-    const { action, projectId } = await req.json();
+    const { action, projectId, newPassword } = await req.json();
     const userId = params.id;
 
     const supabaseAdmin = getSupabaseAdmin(projectId);
@@ -44,16 +44,20 @@ export async function POST(
     }
 
     if (action === "reset-password") {
-      const { data, error } = await supabaseAdmin.auth.admin.generateLink({
-        type: "recovery",
-        uuid: cleanUserId,
+      if (!newPassword) {
+        return NextResponse.json({ error: "No password provided for override" }, { status: 400 });
+      }
+
+      const { data, error } = await supabaseAdmin.auth.admin.updateUserById(cleanUserId, {
+        password: newPassword,
       });
+      
       const result = error ? `Error: ${error.message}` : "SUCCESS";
       
       return NextResponse.json({ 
         success: !error, 
-        link: data?.properties?.action_link,
-        debug_log: `${logMsg} Result: [${result}]`
+        message: error ? error.message : "Sovereign Password Override Successful. The user's password has been forcefully changed.",
+        debug_log: `${logMsg} [OVERRIDE_PWD] Result: [${result}]`
       });
     }
 

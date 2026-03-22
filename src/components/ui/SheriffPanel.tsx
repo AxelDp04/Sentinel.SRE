@@ -56,7 +56,20 @@ export const SheriffPanel = ({ adminKey: propKey }: { adminKey?: string | null }
   };
 
   const handleUserAction = async (userId: string, projectId: string, action: string) => {
-    if (!confirm(`⚠️ Confirm ${action.toUpperCase()} for this user?`)) return;
+    let payload = { action, projectId } as any;
+
+    if (action === 'reset-password') {
+      const newPassword = prompt(`⚠️ SOVEREIGN OVERRIDE\nEnter the exact new password for this user (min 6 chars):`);
+      if (!newPassword) return; // User cancelled
+      if (newPassword.length < 6) {
+        alert("Operation Aborted: Password must be at least 6 characters.");
+        return;
+      }
+      payload.newPassword = newPassword;
+    } else {
+      if (!confirm(`⚠️ Confirm ${action.toUpperCase()} for this user?`)) return;
+    }
+
     try {
       const actualId = userId.split(`${projectId}-`)[1];
       const res = await fetch(`/api/admin/users/${actualId}/actions`, {
@@ -65,7 +78,7 @@ export const SheriffPanel = ({ adminKey: propKey }: { adminKey?: string | null }
           "X-Admin-Key": adminKey || "",
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ action, projectId })
+        body: JSON.stringify(payload)
       });
       const data = await res.json();
       
@@ -77,11 +90,9 @@ export const SheriffPanel = ({ adminKey: propKey }: { adminKey?: string | null }
 
       if (res.ok) {
         alert(data.message || `Action ${action} executed successfully.`);
-        if (action === 'reset-password' && data.link) {
-           console.log("Reset Link:", data.link);
-           alert("Recovery Link generated. (Check Terminal for raw link)");
-        }
         fetchUsers();
+      } else {
+        alert(`Action failed: ${data.error || 'Unknown error'}`);
       }
     } catch (err) {
       alert("Action failed.");
