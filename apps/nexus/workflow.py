@@ -14,7 +14,9 @@ if USE_GEMINI:
     llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash")
 else:
     from langchain_groq import ChatGroq
-    llm = ChatGroq(model="llama-3.3-70b-versatile")
+    # Use the MODEL_NAME from environment variables, fallback to stable versatile
+    model_name = os.getenv("MODEL_NAME", "llama-3.3-70b-versatile")
+    llm = ChatGroq(model=model_name)
 
 class NexusState(TypedDict):
     task_id: str
