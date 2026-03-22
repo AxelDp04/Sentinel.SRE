@@ -12,6 +12,7 @@ import { Gatekeeper } from "@/components/ui/Gatekeeper";
 import { getStoredAdminKey, isValidAdminKey } from "@/lib/auth";
 import { PROJECTS } from "@/constants/projects";
 import { NexusLiveMonitor } from "@/components/ui/NexusLiveMonitor";
+import { SheriffPanel } from "@/components/ui/SheriffPanel";
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
@@ -128,7 +129,7 @@ export default function Home() {
             <section className="space-y-12">
               <div className="flex items-center gap-6">
                  <div className="h-px flex-1 bg-white/5"></div>
-                 <span className="text-[11px] font-black uppercase tracking-[0.5em] text-emerald-500/50">02_Ecosystem_Vitality_Matrix</span>
+                 <span className="text-[11px] font-black uppercase tracking-[0.5em] text-emerald-500/50">03_Ecosystem_Vitality_Matrix</span>
                  <div className="h-px flex-1 bg-white/5"></div>
               </div>
               
@@ -137,10 +138,24 @@ export default function Home() {
               </div>
             </section>
 
-            {/* CATEGORY 4: MAINTENANCE & COMMANDS (AL FONDO) */}
+            {/* CATEGORY 4: CONTROL MAESTRO DE IDENTIDAD (SOLO UNLOCKED) */}
+            {!isSafeMode && (
+              <section className="space-y-12 animate-in slide-in-from-right duration-700">
+                <div className="flex items-center gap-6">
+                   <span className="text-[11px] font-black uppercase tracking-[0.5em] text-red-500/80">04_Identity_Mastery_Hub</span>
+                   <div className="h-px flex-1 bg-red-500/10"></div>
+                </div>
+                
+                <div className="px-4">
+                  <SheriffPanel adminKey={adminKey} />
+                </div>
+              </section>
+            )}
+
+            {/* CATEGORY 5: MAINTENANCE & COMMANDS (AL FONDO) */}
             <section className="pt-20 space-y-12 opacity-40 hover:opacity-100 transition-opacity duration-500">
                <div className="flex items-center gap-6 px-10">
-                  <span className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-700">03_Maintenance_Command_Center</span>
+                  <span className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-700">05_Maintenance_Command_Center</span>
                   <div className="h-px flex-1 bg-white/5"></div>
                </div>
                
