@@ -1,14 +1,12 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
 import { DashboardStats } from "@/components/ui/DashboardStats";
 import { HealthRadar } from "@/components/ui/HealthRadar";
-import { LatencyTrends } from "@/components/ui/LatencyTrends";
 import { ServiceStatus } from "@/components/ui/ServiceStatus";
 import { ActionCenter } from "@/components/ui/ActionCenter";
-import { ProjectMastery } from "@/components/ui/ProjectMastery";
 import { SafeModeLock } from "@/components/ui/SafeModeLock";
 import { SheriffPanel } from "@/components/ui/SheriffPanel";
 import { EcosystemTable } from "@/components/ui/EcosystemTable";
@@ -32,7 +30,6 @@ export default function Home() {
   const fetchEcosystemData = useCallback(async (key: string) => {
     try {
       setLoading(true);
-      // 1. Fetch Users
       const userRes = await fetch("/api/admin/users", {
         headers: { "X-Admin-Key": key }
       });
@@ -43,7 +40,6 @@ export default function Home() {
       const userData = await userRes.json();
       if (userData.users) setUsers(userData.users);
 
-      // 2. Fetch/Simulate Health
       const health: Record<string, any> = {};
       PROJECTS.forEach(p => {
         health[p.id] = {
@@ -71,7 +67,6 @@ export default function Home() {
     }
   }, [fetchEcosystemData]);
 
-  // Standard Next.js Client-Side Guard to prevent Hydration errors
   if (!mounted) return <div className="min-h-screen bg-black" />;
 
   if (!isAuthenticated) {
@@ -87,62 +82,86 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-black text-white selection:bg-sentinel selection:text-black font-sans">
-      <div className="flex h-screen overflow-hidden">
-        {/* Sidebar */}
+    <main className="min-h-screen bg-background text-white selection:bg-sentinel selection:text-black font-sans relative">
+      {/* Premium Cyber Layer */}
+      <div className="fixed inset-0 cyber-grid opacity-20 pointer-events-none" />
+      <div className="fixed inset-0 bg-gradient-to-b from-sentinel/5 via-transparent to-transparent pointer-events-none opacity-40" />
+
+      <div className="flex h-screen overflow-hidden relative z-10">
         <Sidebar onToggleSafeMode={setIsSafeMode} isSafeMode={isSafeMode} />
 
-        {/* Content Area */}
         <div className="flex-1 flex flex-col overflow-hidden">
           <Header />
 
-          <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8 animate-in fade-in duration-700">
-            {/* Upper Tactical Section: Real-Time Monitoring */}
-            <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
-              <div className="xl:col-span-3">
-                <DashboardStats users={users} />
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-1000">
+            
+            {/* 1. Tactical Intelligence Layer (Top Stats) */}
+            <section className="space-y-6">
+               <div className="flex items-center gap-4">
+                  <span className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-600">Infrastructure_Vitality</span>
+                  <div className="h-px flex-1 bg-white/5"></div>
+               </div>
+               <DashboardStats users={users} />
+            </section>
+
+            {/* 2. Command Architecture (Main Bento Grid) */}
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
+              
+              {/* Left Column: Intelligence & Controls (4/12) */}
+              <div className="xl:col-span-4 space-y-8">
+                 <div className="flex flex-col gap-8">
+                    <HealthRadar />
+                    <ActionCenter 
+                      safeMode={isSafeMode} 
+                      setSafeMode={setIsSafeMode} 
+                      onForceRefresh={() => adminKey && fetchEcosystemData(adminKey)} 
+                    />
+                    <SafeModeLock isLocked={isSafeMode} />
+                 </div>
               </div>
-              <div className="xl:col-span-1">
-                <SafeModeLock isLocked={isSafeMode} />
+
+              {/* Right Column: Node Monitoring & Traffic (8/12) */}
+              <div className="xl:col-span-8 space-y-8">
+                 <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                       <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-sentinel/60 italic">Node_Security_Cluster</h2>
+                       <div className="flex items-center gap-2 text-[8px] font-mono text-slate-700">
+                          <div className="w-1 h-1 bg-sentinel rounded-full animate-pulse" /> SRE_REALTIME_STREAM_ACTIVE
+                       </div>
+                    </div>
+                    <ServiceStatus />
+                 </div>
+                 
+                 <div className="space-y-4">
+                    <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-600">Ecosystem_Traffic_Analysis</h2>
+                    <TrafficChart data={users} />
+                 </div>
               </div>
             </div>
 
-            {/* Middle Section: Health & Traffic Intelligence */}
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-              <div className="xl:col-span-1 space-y-6">
-                <HealthRadar />
-                <ActionCenter 
-                  safeMode={isSafeMode} 
-                  setSafeMode={setIsSafeMode} 
-                  onForceRefresh={() => adminKey && fetchEcosystemData(adminKey)} 
-                />
-              </div>
-              <div className="xl:col-span-2 space-y-6">
-                <ServiceStatus />
-                <TrafficChart data={users} />
-              </div>
-            </div>
-
-            {/* Bottom Section: Ecosystem Mastery */}
-            <div className="grid grid-cols-1 gap-8 pt-4 border-t border-white/5">
-              <div className="flex items-center gap-4 mb-2">
-                 <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
-                 <h2 className="text-[10px] font-black uppercase tracking-[0.8em] text-slate-500 italic">Ecosystem_Sovereignty_Layer</h2>
-                 <div className="h-px flex-1 bg-gradient-to-r from-white/10 via-transparent to-transparent"></div>
+            {/* 3. Sovereignty Layer (Ecosystem Data) */}
+            <section className="space-y-8 border-t border-white/5 pt-12">
+              <div className="flex items-center justify-center gap-8 text-center pb-4">
+                 <div className="h-px w-24 bg-gradient-to-r from-transparent to-white/10"></div>
+                 <h2 className="text-[11px] font-black uppercase tracking-[1em] text-slate-500 italic">Ecosystem_Mastery_Matrix</h2>
+                 <div className="h-px w-24 bg-gradient-to-l from-transparent to-white/10"></div>
               </div>
               
-              <EcosystemTable healthData={healthData} users={users} />
-              
-              {!isSafeMode && (
-                <div className="animate-in slide-in-from-bottom-5 duration-500">
-                  <SheriffPanel adminKey={adminKey} />
-                </div>
-              )}
-            </div>
+              <div className="space-y-12">
+                <EcosystemTable healthData={healthData} users={users} />
+                
+                {!isSafeMode && (
+                  <div className="animate-in slide-in-from-bottom-10 duration-700">
+                    <SheriffPanel adminKey={adminKey} />
+                  </div>
+                )}
+              </div>
+            </section>
 
-            <div className="grid grid-cols-1 gap-6 pb-12">
+            {/* 4. Debug Console */}
+            <section className="pb-12 opacity-40 hover:opacity-100 transition-opacity">
                <TermDebug />
-            </div>
+            </section>
           </div>
         </div>
       </div>

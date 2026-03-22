@@ -7,8 +7,8 @@ import { createClient } from "@supabase/supabase-js";
 
 const projectConfigs: Record<string, { url: string; key: string }> = {
   sentinel: {
-    url: (process.env.NEXT_PUBLIC_SUPABASE_URL || "https://rdbdwvwmnozumwtxdmra.supabase.co").trim(),
-    key: (process.env.SUPABASE_SERVICE_ROLE_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkYmR3dndtbm96dW13dHhkbXJhIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MzE1MzY0NywiZXhwIjoyMDg4NzI5NjQ3fQ.DHAAEGouQWmjH8yYBsu53uTveIJxtThpOncv2e27yjY").trim(),
+    url: (process.env.NEXT_PUBLIC_SUPABASE_URL || "https://badqkfvbymxyqtwpnejd.supabase.co").trim(),
+    key: (process.env.SUPABASE_SERVICE_ROLE_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJhZHFrZnZieW14eXF0d3BuZWpkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NDExNzM1NSwiZXhwIjoyMDg5NjkzMzU1fQ.dtW8fcpzew8AjgFPwJ1_vXGGUoVTzO9ATx-dRY-axSo").trim(),
   },
   arqovex: {
     url: "https://rdbdwvwmnozumwtxdmra.supabase.co",
