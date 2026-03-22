@@ -29,16 +29,25 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Main telemetry database unavailable" }, { status: 500 });
     }
 
-    // 1. Fetch incidents from the last 24 Hours
+    // 1. Fetch incidents from the last 24 Hours (Direct REST call to bypass PGRST205 schema cache bug)
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
     
-    const { data: incidents, error: dbError } = await supabaseAdmin
-      .from('incident_history')
-      .select('*')
-      .gte('created_at', twentyFourHoursAgo)
-      .order('created_at', { ascending: false });
+    const dbUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/incident_history?created_at=gte.${twentyFourHoursAgo}&order=created_at.desc`;
+    const dbRes = await fetch(dbUrl, {
+      method: "GET",
+      headers: {
+        "apikey": process.env.SUPABASE_SERVICE_ROLE_KEY || "",
+        "Authorization": `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY || ""}`,
+        "Content-Type": "application/json"
+      }
+    });
 
-    if (dbError) throw dbError;
+    if (!dbRes.ok) {
+      const errTxt = await dbRes.text();
+      throw new Error(`DB Telemetry Fetch Failed (REST Bypass): ${dbRes.status} ${errTxt}`);
+    }
+
+    const incidents = await dbRes.json();
 
     // 2. Calculate Uptime Metric
     // 24 hours = 1440 minutes. Assume each incident = 3 mins of downtime for estimation
