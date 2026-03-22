@@ -19,10 +19,10 @@ import { getStoredAdminKey, isValidAdminKey } from "@/lib/auth";
 import { PROJECTS } from "@/constants/projects";
 
 export default function Home() {
+  const [mounted, setMounted] = useState(false);
   const [isSafeMode, setIsSafeMode] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [adminKey, setAdminKey] = useState<string | null>(null);
-  const [booting, setBooting] = useState(true);
   
   // Central Data State
   const [users, setUsers] = useState<any[]>([]);
@@ -31,15 +31,19 @@ export default function Home() {
 
   const fetchEcosystemData = useCallback(async (key: string) => {
     try {
+      setLoading(true);
       // 1. Fetch Users
       const userRes = await fetch("/api/admin/users", {
         headers: { "X-Admin-Key": key }
       });
-      if (userRes.status === 401) return;
+      if (userRes.status === 401) {
+        setIsAuthenticated(false);
+        return;
+      }
       const userData = await userRes.json();
       if (userData.users) setUsers(userData.users);
 
-      // 2. Fetch/Simulate Health (Simulated for this view, but could be fetch)
+      // 2. Fetch/Simulate Health
       const health: Record<string, any> = {};
       PROJECTS.forEach(p => {
         health[p.id] = {
@@ -56,6 +60,7 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    setMounted(true);
     const key = getStoredAdminKey();
     if (isValidAdminKey(key)) {
       setIsAuthenticated(true);
@@ -64,17 +69,21 @@ export default function Home() {
       const interval = setInterval(() => fetchEcosystemData(key), 30000);
       return () => clearInterval(interval);
     }
-    setBooting(false);
   }, [fetchEcosystemData]);
 
-  if (booting) return <div className="min-h-screen bg-black" />;
+  // Standard Next.js Client-Side Guard to prevent Hydration errors
+  if (!mounted) return <div className="min-h-screen bg-black" />;
 
   if (!isAuthenticated) {
-    return <Gatekeeper onAccessGranted={(key) => {
-      setAdminKey(key);
-      setIsAuthenticated(true);
-      fetchEcosystemData(key);
-    }} />;
+    return (
+      <Gatekeeper 
+        onAccessGranted={(key) => {
+          setAdminKey(key);
+          setIsAuthenticated(true);
+          fetchEcosystemData(key);
+        }} 
+      />
+    );
   }
 
   return (
