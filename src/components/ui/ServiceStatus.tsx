@@ -1,26 +1,46 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { PROJECTS } from "@/constants/projects";
+import React, { useState, useEffect } from "react";
 import { StatusCard } from "./StatusCard";
+import { PROJECTS } from "@/constants/projects";
 
 export const ServiceStatus = () => {
   const [healthData, setHealthData] = useState<Record<string, any>>({});
 
   useEffect(() => {
-    // Simulate real-time health data
-    const interval = setInterval(() => {
-      const newData: Record<string, any> = {};
+    const fetchHealth = () => {
+      const data: Record<string, any> = {};
       PROJECTS.forEach(p => {
-        newData[p.id] = {
-          status: p.id === 'arqovex' ? 'online' : (Math.random() > 0.05 ? 'online' : 'offline'),
-          latency: Math.floor(Math.random() * 50) + 15,
-          uptime: 99.8 + (Math.random() * 0.2)
+        data[p.id] = {
+           status: p.id === 'arqovex' ? 'online' : (Math.random() > 0.05 ? 'online' : 'offline'),
+           latency: Math.floor(Math.random() * 50) + 15
         };
+        
+        // Auto-Healing Trigger Simulation
+        if (data[p.id].status === 'offline') {
+           triggerHealing(p.id, { message: "Internal Server Error (Simulated)", code: 500 });
+        }
       });
-      setHealthData(newData);
-    }, 5000);
-    
+      setHealthData(data);
+    };
+
+    const triggerHealing = async (serviceName: string, error: any) => {
+       try {
+         await fetch("/api/admin/healing", {
+           method: "POST",
+           headers: { 
+             "X-Admin-Key": sessionStorage.getItem("adminKey") || "",
+             "Content-Type": "application/json"
+           },
+           body: JSON.stringify({ service_name: serviceName, error_payload: error })
+         });
+       } catch (e) {
+         console.error("Auto-Healing failed to trigger");
+       }
+    };
+
+    fetchHealth();
+    const interval = setInterval(fetchHealth, 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -29,12 +49,12 @@ export const ServiceStatus = () => {
       {PROJECTS.map((project) => (
         <StatusCard 
           key={project.id}
+          id={project.id}
           name={project.name}
-          description={project.description}
+          url={project.url}
           status={healthData[project.id]?.status || 'checking'}
           latency={healthData[project.id]?.latency}
-          uptime={healthData[project.id]?.uptime}
-          iconName={project.icon}
+          onRedeploy={(id) => console.log(`Triggering redeploy for ${id}`)}
         />
       ))}
     </div>

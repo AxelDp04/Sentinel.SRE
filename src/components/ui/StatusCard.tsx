@@ -1,96 +1,143 @@
 "use client";
 
-import React from "react";
-import * as LucideIcons from "lucide-react";
-import { LucideIcon } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { 
+  Activity, 
+  ShieldCheck, 
+  ShieldAlert, 
+  ArrowUpRight, 
+  Zap, 
+  Clock, 
+  RefreshCcw,
+  Terminal as TerminalIcon,
+  HardDrive
+} from "lucide-react";
+import { PROJECTS } from "@/constants/projects";
 
 interface StatusCardProps {
+  id: string;
   name: string;
-  description: string;
-  status: "online" | "offline" | "checking";
+  url: string;
+  status: 'online' | 'offline' | 'checking';
   latency?: number;
-  uptime?: number;
-  iconName: keyof typeof LucideIcons;
+  onRedeploy?: (id: string) => void;
 }
 
-export const StatusCard = ({
-  name,
-  description,
-  status,
-  latency,
-  uptime,
-  iconName,
-}: StatusCardProps) => {
-  const Icon = LucideIcons[iconName] as LucideIcon;
+export const StatusCard = ({ id, name, url, status, latency, onRedeploy }: StatusCardProps) => {
+  const [incidents, setIncidents] = useState<any[]>([]);
+  const isOnline = status === 'online';
+
+  useEffect(() => {
+    // Fetch recent incidents for this service
+    const fetchIncidents = async () => {
+      try {
+        const res = await fetch("/api/admin/incidents", {
+          headers: { "X-Admin-Key": sessionStorage.getItem("adminKey") || "" }
+        });
+        const data = await res.json();
+        if (data.incidents) {
+          setIncidents(data.incidents.filter((i: any) => i.service_name.toLowerCase() === id.toLowerCase()));
+        }
+      } catch (e) {
+        console.error("Incidents fetch failed");
+      }
+    };
+    if (status !== 'checking') fetchIncidents();
+  }, [id, status]);
+
+  const latestIncident = incidents[0];
 
   return (
-    <div className={`glass p-6 min-w-[300px] relative overflow-hidden transition-all duration-500 group ${
-      status === 'offline' ? 'bg-red-500/10 border-red-500/30' : 'bg-slate-900/40'
-    } hover:shadow-[0_0_30px_rgba(16,185,129,0.1)]`}>
-      <div className="flex justify-between items-start mb-4 relative z-10">
-        <div className={`p-3 rounded-lg group-hover:scale-110 transition-transform duration-300 ${
-          status === 'offline' ? 'bg-red-500/20' : 'bg-sentinel/10'
-        }`}>
-          <Icon className={`w-6 h-6 ${status === 'offline' ? 'text-red-400' : 'text-sentinel'}`} />
+    <div className={`glass relative overflow-hidden transition-all duration-500 group ${
+      !isOnline && status !== 'checking' 
+        ? 'bg-red-500/10 border-red-500/20' 
+        : 'bg-slate-900/40 border-white/5'
+    }`}>
+      {/* Healing Spark Indicator */}
+      {latestIncident?.status === 'resolved' && (
+        <div className="absolute top-2 right-2 z-10 animate-pulse">
+           <div className="bg-sentinel/20 p-1 rounded-full border border-sentinel/30">
+              <Zap className="w-3 h-3 text-sentinel shadow-[0_0_10px_#10b981]" />
+           </div>
         </div>
-        <div className="flex items-center gap-2">
-          {status === "online" && (
-            <div className="relative flex h-3 w-3">
-              <span className="animate-radar absolute inline-flex h-full w-full rounded-full bg-sentinel opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-sentinel"></span>
-            </div>
-          )}
-          {status === "offline" && (
-             <div className="relative flex h-3 w-3">
-               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-40"></span>
-               <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500 shadow-[0_0_10px_#ef4444]"></span>
-             </div>
-          )}
-          {status === "checking" && (
-             <span className="relative inline-flex rounded-full h-3 w-3 bg-yellow-500 animate-pulse"></span>
-          )}
-          <span className={`text-[10px] font-mono uppercase tracking-widest ${status === 'offline' ? 'text-red-400' : 'text-slate-400'}`}>
-            {status}
-          </span>
-        </div>
-      </div>
-
-      <div className="relative z-10">
-        <span className="text-[9px] font-mono text-slate-500 uppercase tracking-[0.2em] block mb-1">Estado de salud de mis negocios</span>
-        <h3 className="text-xl font-bold mb-1 text-white tracking-tighter group-hover:text-sentinel transition-colors">{name}</h3>
-        <p className="text-sm text-slate-400 mb-4 line-clamp-2">{description}</p>
-      </div>
-
-      <div className="flex items-center justify-between mt-auto pt-4 border-t border-white/5 border-dashed relative z-10">
-        {latency !== undefined && (
-          <div className="flex flex-col">
-             <span className="text-[8px] text-slate-600 uppercase font-mono tracking-tighter">Latencia / Respuesta</span>
-             <div className="flex items-center gap-1.5 mt-0.5">
-               <LucideIcons.Zap className="w-3 h-3 text-amber-500" />
-               <span className="text-xs font-mono text-sentinel font-bold">{latency}ms</span>
-             </div>
-          </div>
-        )}
-        
-        {uptime !== undefined && (
-          <div className="flex flex-col items-end">
-            <span className="text-[8px] text-slate-600 uppercase font-mono tracking-tighter">Disponibilidad 24h</span>
-            <span className={`text-xs font-mono font-bold ${uptime > 99 ? "text-sentinel" : "text-yellow-400"}`}>
-              {uptime.toFixed(1)}%
-            </span>
-          </div>
-        )}
-      </div>
-
-      {/* Decorative background grid if offline */}
-      {status === 'offline' && (
-        <div className="absolute inset-0 bg-red-500/5 opacity-40 pointer-events-none mix-blend-overlay"></div>
       )}
 
-      {/* Border gradient effect */}
-      <div className={`absolute inset-0 border rounded-xl pointer-events-none transition-colors duration-500 ${
-        status === 'offline' ? 'border-red-500/20 group-hover:border-red-500/40' : 'border-white/5 group-hover:border-sentinel/20'
-      }`}></div>
+      {/* Main Content */}
+      <div className="p-5">
+        <div className="flex justify-between items-start mb-4">
+          <div className="flex items-center gap-3">
+            <div className={`p-2 rounded-lg ${isOnline ? 'bg-sentinel/10 text-sentinel' : 'bg-red-500/10 text-red-500'}`}>
+              <Activity className="w-4 h-4" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-white tracking-tight">{name}</h3>
+              <p className="text-[10px] text-slate-500 font-mono truncate max-w-[120px]">{url.replace('https://', '')}</p>
+            </div>
+          </div>
+          <div className="flex flex-col items-end">
+            <div className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border ${
+              isOnline ? 'border-sentinel/20 text-sentinel' : 'border-red-500/20 text-red-500'
+            }`}>
+              {status}
+            </div>
+            {latency && <span className="text-[9px] font-mono text-slate-500 mt-1">{latency}ms</span>}
+          </div>
+        </div>
+
+        {/* Incident Micro-Log */}
+        <div className="mb-4 p-3 rounded bg-black/40 border border-white/5 min-h-[60px] flex flex-col justify-center">
+            {latestIncident ? (
+               <div className="space-y-1">
+                 <div className="flex items-center gap-1.5 text-[8px] font-mono text-slate-500 uppercase">
+                    <Clock className="w-2.5 h-2.5" /> {new Date(latestIncident.created_at).toLocaleDateString()}
+                    <span className={`ml-auto px-1 rounded flex items-center gap-1 ${
+                      latestIncident.status === 'resolved' ? 'bg-sentinel/10 text-sentinel' : 'bg-orange-500/10 text-orange-500'
+                    }`}>
+                      {latestIncident.status === 'resolved' && <Zap className="w-2 h-2" />} {latestIncident.status.toUpperCase()}
+                    </span>
+                 </div>
+                 <p className="text-[10px] text-white leading-tight italic line-clamp-2">
+                    "{latestIncident.ai_diagnosis}"
+                 </p>
+                 <div className="text-[8px] font-bold text-sentinel/80 flex items-center gap-1 uppercase tracking-tighter">
+                    <RefreshCcw className="w-2.5 h-2.5" /> ACTION: {latestIncident.action_taken}
+                 </div>
+               </div>
+            ) : (
+               <div className="text-center">
+                  <span className="text-[9px] font-mono text-slate-700 uppercase tracking-widest">No Recent Incidents</span>
+               </div>
+            )}
+        </div>
+
+        {/* Action Bar */}
+        <div className="flex items-center gap-2">
+           <a 
+            href={url} 
+            target="_blank" 
+            rel="noreferrer"
+            className="flex-1 flex items-center justify-center gap-2 py-1.5 rounded bg-white/5 text-[10px] font-bold text-slate-300 hover:bg-white/10 transition-colors uppercase"
+           >
+             Open <ArrowUpRight className="w-3 h-3" />
+           </a>
+           <button 
+             onClick={() => onRedeploy && onRedeploy(id)}
+             className="px-2 py-1.5 rounded bg-orange-500/10 text-orange-400 hover:bg-orange-500/20 transition-colors border border-orange-500/20"
+             title="Force Redeploy"
+           >
+             <RefreshCcw className="w-3 h-3" />
+           </button>
+           <button 
+             className="px-2 py-1.5 rounded bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition-colors border border-blue-500/20"
+             title="Clear Cache"
+           >
+             <HardDrive className="w-3 h-3" />
+           </button>
+        </div>
+      </div>
+      
+      {/* Background Subtle Accent */}
+      <div className={`absolute bottom-0 left-0 right-0 h-0.5 ${isOnline ? 'bg-sentinel/20' : 'bg-red-500/20'}`}></div>
     </div>
   );
 };
