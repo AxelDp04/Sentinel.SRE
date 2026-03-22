@@ -52,6 +52,24 @@
   background-size: 30px 30px;
 }
 
+@keyframes neural-pulse {
+  0%, 100% { opacity: 0.2; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.05); }
+}
+
+@keyframes scanning-grid {
+  0% { background-position: 0 0; }
+  100% { background-position: 30px 30px; }
+}
+
+.animate-neural-pulse {
+  animation: neural-pulse 4s ease-in-out infinite;
+}
+
+.animate-scanning-grid {
+  animation: scanning-grid 10s linear infinite;
+}
+
 @keyframes scanline {
   0% { transform: translateY(-100%); }
   100% { transform: translateY(100%); }

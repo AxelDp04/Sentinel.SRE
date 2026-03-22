@@ -6,6 +6,7 @@ import { Header } from "@/components/layout/Header";
 import { DashboardStats } from "@/components/ui/DashboardStats";
 import { EcosystemStatusGrid } from "@/components/ui/EcosystemStatusGrid";
 import { VitalityFlowMonitor } from "@/components/ui/VitalityFlowMonitor";
+import { BootSequence } from "@/components/ui/BootSequence";
 import { ActionCenter } from "@/components/ui/ActionCenter";
 import { Gatekeeper } from "@/components/ui/Gatekeeper";
 import { getStoredAdminKey, isValidAdminKey } from "@/lib/auth";
@@ -14,6 +15,7 @@ import { NexusLiveMonitor } from "@/components/ui/NexusLiveMonitor";
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
+  const [isBooting, setIsBooting] = useState(true);
   const [isSafeMode, setIsSafeMode] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [adminKey, setAdminKey] = useState<string | null>(null);
@@ -65,6 +67,10 @@ export default function Home() {
 
   if (!mounted) return <div className="min-h-screen bg-black" />;
 
+  if (isBooting) {
+    return <BootSequence onComplete={() => setIsBooting(false)} />;
+  }
+
   if (!isAuthenticated) {
     return (
       <Gatekeeper 
@@ -78,18 +84,18 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-background text-white selection:bg-sentinel selection:text-black font-sans relative">
+    <main className="min-h-screen bg-background text-white selection:bg-sentinel selection:text-black font-sans relative overflow-x-hidden md:overflow-visible">
       {/* Premium Cyber Layer */}
       <div className="fixed inset-0 cyber-grid opacity-20 pointer-events-none" />
-      <div className="fixed inset-0 bg-gradient-to-b from-sentinel/5 via-transparent to-transparent pointer-events-none opacity-40" />
+      <div className="fixed inset-0 bg-gradient-to-b from-sentinel/5 via-transparent to-transparent pointer-events-none opacity-40 animate-pulse" />
 
-      <div className="flex h-screen overflow-hidden relative z-10">
+      <div className="flex flex-col md:flex-row h-screen overflow-hidden relative z-10 scale-[0.98] sm:scale-100 transition-all duration-700">
         <Sidebar onToggleSafeMode={setIsSafeMode} isSafeMode={isSafeMode} />
 
         <div className="flex-1 flex flex-col overflow-hidden">
           <Header />
 
-          <div className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-24 animate-in fade-in slide-in-from-bottom-2 duration-1000 max-w-6xl mx-auto w-full">
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-8 space-y-16 sm:space-y-24 animate-in fade-in slide-in-from-bottom-2 duration-1000 max-w-6xl mx-auto w-full">
             
             {/* VITALITY FLOW MONITOR (ECG PULSE) */}
             <div className="w-full">

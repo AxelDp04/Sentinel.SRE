@@ -5,10 +5,10 @@ import { Home, Car, Search, Activity } from "lucide-react";
 
 export const VitalityFlowMonitor = () => {
   return (
-    <div className="card-premium p-6 flex items-center justify-between bg-slate-900/60 backdrop-blur-3xl border-white/5 relative overflow-hidden group">
+    <div className="card-premium p-4 md:p-6 flex flex-col md:flex-row items-center justify-between bg-slate-900/60 backdrop-blur-3xl border-white/5 relative overflow-hidden group gap-6 md:gap-0">
       {/* Label Izquierda */}
-      <div className="flex flex-col gap-1 z-10">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col gap-1 z-10 w-full md:w-auto text-center md:text-left">
+        <div className="flex items-center justify-center md:justify-start gap-2">
           <Activity className="w-4 h-4 text-emerald-500 animate-pulse" />
           <span className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-500/80 italic">Ecosystem_Pulse</span>
         </div>
