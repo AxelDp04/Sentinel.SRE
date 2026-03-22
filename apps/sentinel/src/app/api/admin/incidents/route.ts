@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { isValidAdminKey } from "@/lib/auth";
 
+export const dynamic = 'force-dynamic';
+
 const SENTINEL_URL = "https://badqkfvbymxyqtwpnejd.supabase.co";
 const SENTINEL_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJhZHFrZnZieW14eXF0d3BuZWpkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NDExNzM1NSwiZXhwIjoyMDg5NjkzMzU1fQ.dtW8fcpzew8AjgFPwJ1_vXGGUoVTzO9ATx-dRY-axSo";
 
@@ -23,8 +25,11 @@ export async function GET(req: Request) {
 
     // Use direct REST to bypass PostgREST schema cache issue (PGRST205)
     const res = await fetch(
-      `${SENTINEL_URL}/rest/v1/incident_history?select=*&order=created_at.desc&limit=20`,
-      { headers: dbHeaders }
+      `${SENTINEL_URL}/rest/v1/nexus_tasks?select=*&order=created_at.desc&limit=20`,
+      { 
+        headers: dbHeaders,
+        cache: 'no-store'
+      }
     );
 
     if (!res.ok) {
