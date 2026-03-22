@@ -4,7 +4,11 @@ import React, { useState, useEffect } from "react";
 import { StatusCard } from "./StatusCard";
 import { PROJECTS } from "@/constants/projects";
 
-export const ServiceStatus = () => {
+interface ServiceStatusProps {
+  adminKey: string | null;
+}
+
+export const ServiceStatus = ({ adminKey }: ServiceStatusProps) => {
   const [healthData, setHealthData] = useState<Record<string, any>>({});
 
   useEffect(() => {
@@ -17,7 +21,7 @@ export const ServiceStatus = () => {
         };
         
         // Auto-Healing Trigger Simulation
-        if (data[p.id].status === 'offline') {
+        if (data[p.id].status === 'offline' && adminKey) {
            triggerHealing(p.id, { message: "Internal Server Error (Simulated)", code: 500 });
         }
       });
@@ -29,7 +33,7 @@ export const ServiceStatus = () => {
          await fetch("/api/admin/healing", {
            method: "POST",
            headers: { 
-             "X-Admin-Key": sessionStorage.getItem("adminKey") || "",
+             "X-Admin-Key": adminKey || "",
              "Content-Type": "application/json"
            },
            body: JSON.stringify({ service_name: serviceName, error_payload: error })
@@ -42,7 +46,7 @@ export const ServiceStatus = () => {
     fetchHealth();
     const interval = setInterval(fetchHealth, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [adminKey]);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -52,6 +56,7 @@ export const ServiceStatus = () => {
           id={project.id}
           name={project.name}
           url={project.url}
+          adminKey={adminKey}
           status={healthData[project.id]?.status || 'checking'}
           latency={healthData[project.id]?.latency}
           onRedeploy={(id) => console.log(`Triggering redeploy for ${id}`)}

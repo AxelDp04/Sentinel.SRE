@@ -16,20 +16,22 @@ interface StatusCardProps {
   id: string;
   name: string;
   url: string;
+  adminKey: string | null;
   status: 'online' | 'offline' | 'checking';
   latency?: number;
   onRedeploy?: (id: string) => void;
 }
 
-export const StatusCard = ({ id, name, url, status, latency, onRedeploy }: StatusCardProps) => {
+export const StatusCard = ({ id, name, url, adminKey, status, latency, onRedeploy }: StatusCardProps) => {
   const [incidents, setIncidents] = useState<any[]>([]);
   const isOnline = status === 'online';
 
   useEffect(() => {
     const fetchIncidents = async () => {
+      if (!adminKey) return;
       try {
         const res = await fetch("/api/admin/incidents", {
-          headers: { "X-Admin-Key": sessionStorage.getItem("adminKey") || "" }
+          headers: { "X-Admin-Key": adminKey }
         });
         const data = await res.json();
         if (data.incidents) {
@@ -39,8 +41,8 @@ export const StatusCard = ({ id, name, url, status, latency, onRedeploy }: Statu
         console.error("Incidents fetch failed");
       }
     };
-    if (status !== 'checking') fetchIncidents();
-  }, [id, status]);
+    if (status !== 'checking' && adminKey) fetchIncidents();
+  }, [id, status, adminKey]);
 
   const latestIncident = incidents[0];
 
