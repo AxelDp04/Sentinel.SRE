@@ -88,65 +88,64 @@ export default function Home() {
         <div className="flex-1 flex flex-col overflow-hidden">
           <Header />
 
-          <div className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-1000 max-w-7xl mx-auto w-full">
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-24 animate-in fade-in slide-in-from-bottom-2 duration-1000 max-w-6xl mx-auto w-full">
             
             {/* CATEGORY 1: VIGILANCIA DE SEGURIDAD (Métricas) */}
-            <section className="space-y-6">
-               <div className="flex items-center gap-4">
-                  <span className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-600">01_Vigilancia_de_Seguridad</span>
+            <section className="space-y-8">
+               <div className="flex items-center gap-6">
+                  <span className="text-[11px] font-black uppercase tracking-[0.5em] text-slate-700">01_Security_Vigilance</span>
                   <div className="h-px flex-1 bg-white/5"></div>
                </div>
                <DashboardStats users={users} />
             </section>
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+            {/* CATEGORY 2: REGISTRO DE INCIDENTES (EL CORAZÓN - NEXUS) */}
+            <section className="space-y-10 animate-in zoom-in-95 duration-1000">
+              <div className="flex flex-col items-center gap-4 mb-10">
+                <div className="h-12 w-px bg-gradient-to-b from-transparent to-blue-500/50" />
+                <span className="text-[12px] font-black uppercase tracking-[0.8em] text-blue-500/80">Nexus_Engine_Nucleus</span>
+                <div className="h-px w-64 bg-gradient-to-r from-transparent via-blue-500/20 to-transparent" />
+              </div>
               
-              {/* CATEGORY 2: ESTADO DEL ECOSISTEMA (Izquierda - 5/12) */}
-              <section className="lg:col-span-5 space-y-6">
-                <div className="flex items-center gap-4">
-                  <span className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-600">02_Estado_del_Ecosistema</span>
-                  <div className="h-px flex-1 bg-white/5"></div>
-                </div>
-                <div className="space-y-4">
-                   <div className="flex items-center justify-between px-2">
-                      <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-500/60 italic">Node_Health_Matrix</h2>
-                      <div className="flex items-center gap-2 text-[8px] font-mono text-slate-700">
-                         <div className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse" /> NODES_SYNC_ACTIVE
-                      </div>
-                   </div>
-                   <EcosystemStatusGrid healthData={healthData} />
-                </div>
-                
-                {/* Advanced Controls (Minimized) */}
-                <div className="pt-8 opacity-20 hover:opacity-100 transition-opacity">
-                   <ActionCenter 
-                      safeMode={isSafeMode} 
-                      setSafeMode={setIsSafeMode} 
-                      onForceRefresh={() => adminKey && fetchEcosystemData(adminKey)} 
-                    />
-                </div>
-              </section>
-
-              {/* CATEGORY 3: REGISTRO DE INCIDENTES (Derecha - 7/12) */}
-              <section className="lg:col-span-7 space-y-6">
-                <div className="flex items-center gap-4">
-                  <span className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-600">03_Registro_de_Incidentes</span>
-                  <div className="h-px flex-1 bg-white/5"></div>
-                </div>
+              <div className="w-full">
                 <NexusLiveMonitor adminKey={adminKey} />
-              </section>
+              </div>
+            </section>
 
-            </div>
+            {/* CATEGORY 3: ESTADO DEL ECOSISTEMA (FLUJO DE VIDA) */}
+            <section className="space-y-12">
+              <div className="flex items-center gap-6">
+                 <div className="h-px flex-1 bg-white/5"></div>
+                 <span className="text-[11px] font-black uppercase tracking-[0.5em] text-emerald-500/50">02_Ecosystem_Vitality_Matrix</span>
+                 <div className="h-px flex-1 bg-white/5"></div>
+              </div>
+              
+              <div className="px-4">
+                <EcosystemStatusGrid healthData={healthData} />
+              </div>
+            </section>
 
-            {/* Footer / Debug (Optional visibility) */}
-            <section className="pt-12 border-t border-white/5 flex flex-col items-center gap-4 opacity-30">
-               <p className="text-[10px] font-mono uppercase tracking-widest text-slate-600">
-                  Sentinel SRE Ecosystem v3.0 - Managed by Nexus Engine
-               </p>
-               <div className="flex gap-8 text-[9px] font-mono text-slate-700 uppercase">
-                  <span>LATENCY: SYNCED</span>
-                  <span>ENCRYPTION: AES-256</span>
-                  <span>MODE: MISSION_CONTROL</span>
+            {/* CATEGORY 4: MAINTENANCE & COMMANDS (AL FONDO) */}
+            <section className="pt-20 space-y-12 opacity-40 hover:opacity-100 transition-opacity duration-500">
+               <div className="flex items-center gap-6 px-10">
+                  <span className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-700">03_Maintenance_Command_Center</span>
+                  <div className="h-px flex-1 bg-white/5"></div>
+               </div>
+               
+               <div className="max-w-4xl mx-auto">
+                 <ActionCenter 
+                    safeMode={isSafeMode} 
+                    setSafeMode={setIsSafeMode} 
+                    onForceRefresh={() => adminKey && fetchEcosystemData(adminKey)} 
+                  />
+               </div>
+
+               {/* Footer Protocol */}
+               <div className="flex flex-col items-center gap-6 pt-12">
+                  <div className="h-px w-32 bg-gradient-to-r from-transparent via-slate-800 to-transparent" />
+                  <p className="text-[10px] font-mono uppercase tracking-[0.4em] text-slate-700">
+                     Sovereignty_Mastery_v3.2 // Neural_Shield_Active
+                  </p>
                </div>
             </section>
 
