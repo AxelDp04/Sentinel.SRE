@@ -48,7 +48,13 @@ export async function POST(req: Request) {
     }
 
     const rawData = await dbRes.json();
-    const incidents = Array.isArray(rawData) ? rawData : (rawData?.error ? [] : [rawData]);
+    let incidents = Array.isArray(rawData) ? rawData : (rawData?.error ? [] : [rawData]);
+
+    // Force strict JSON scrubbing to eliminate hidden Proxy objects that crash the AI
+    incidents = JSON.parse(JSON.stringify(incidents));
+    
+    // Telemetry log for Vercel debugging
+    console.log('DATOS ENVIADOS A GEMINI (Scrubbed):', incidents);
 
     // 2. Calculate Uptime Metric
     // 24 hours = 1440 minutes. Assume each incident = 3 mins of downtime for estimation
