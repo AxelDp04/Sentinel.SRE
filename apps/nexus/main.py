@@ -54,10 +54,12 @@ async def poll_supabase():
                     update_task_resolved(
                         task_id, 
                         final_state["final_output"],
-                        action_executed=final_state.get("action_executed", "none"),
-                        was_successful=final_state.get("was_successful", True)
+                        action_executed=final_state["final_output"].get("action_executed", "none"),
+                        was_successful=final_state["final_output"].get("was_successful", True),
+                        recovery_time=final_state["final_output"].get("recovery_time", 0.0),
+                        retry_count=final_state["final_output"].get("retry_count", 0)
                     )
-                    print(f"[{task_id}] [Action Engine] Resultado inyectado: {final_state.get('action_executed')} (Success: {final_state.get('was_successful')})\n")
+                    print(f"[{task_id}] [Action Engine] Resultado inyectado: {final_state['final_output'].get('action_executed')} (Success: {final_state['final_output'].get('was_successful')}, Time: {final_state['final_output'].get('recovery_time')}s)\n")
 
                     # [NEXUS VIGILANTE] - Notificación Proactiva (Gatillo Autónomo)
                     from services.whatsapp_service import send_report_to_vercel
@@ -124,6 +126,37 @@ app = FastAPI(title="Nexus Engine", lifespan=lifespan)
 @app.get("/")
 def read_root():
     return {"status": "Nexus Engine is running! Listening to Supabase..."}
+
+@app.post("/api/nexus/break-system")
+async def break_system():
+    """
+    ENDPOINT DE SACRIFICIO (Live Demo):
+    Simula una caída crítica de base de datos con latencia extrema.
+    """
+    print("\n🎬 [DEMO] Disparando Endpoint de Sacrificio...")
+    
+    # Inyectar una tarea directamente en DB (Simulando el error del sistema)
+    from database import supabase
+    if not supabase:
+        return {"error": "DB no conectada."}
+
+    # Error descriptivo para que el SRE actúe
+    error_data = {
+        "project_name": "DEMO_LIVE_SACRIFICE",
+        "error_description": "CRITICAL ERROR: PostgreSQL Connection Pool exhausted. Socket timeout after 10000ms. High latency detected in auth-service. (Triggering RETRY_STRATEGY)",
+        "status": "pending",
+        "resolution_steps": ["Sentinel: Sistema colapsado. Delegando control total a Nexus."]
+    }
+
+    try:
+        res = supabase.table("nexus_tasks").insert(error_data).execute()
+        return {
+            "status": "SYSTEM_DOWN",
+            "incident_id": res.data[0]["id"],
+            "message": "Falla crítica inyectada. Observa el Dashboard..."
+        }
+    except Exception as e:
+        return {"error": str(e)}
 
 @app.post("/api/nexus/test-action")
 async def test_action_trigger(background_tasks: BackgroundTasks):

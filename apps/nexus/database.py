@@ -55,14 +55,16 @@ def append_resolution_step(task_id: str, step: str):
     except Exception as e:
         print(f"Error appending step: {e}")
 
-def update_task_resolved(task_id: str, ai_output: dict, action_executed: str = "none", was_successful: bool = True):
+def update_task_resolved(task_id: str, ai_output: dict, action_executed: str = "none", was_successful: bool = True, recovery_time: float = 0.0, retry_count: int = 0):
     if not supabase: return None
     try:
         response = supabase.table("nexus_tasks").update({
             "status": "resolved",
             "ai_output": ai_output,
             "action_executed": action_executed,
-            "was_successful": was_successful
+            "was_successful": was_successful,
+            "recovery_time": recovery_time,
+            "retry_count": retry_count
         }).eq("id", task_id).execute()
         return response.data
     except Exception as e:

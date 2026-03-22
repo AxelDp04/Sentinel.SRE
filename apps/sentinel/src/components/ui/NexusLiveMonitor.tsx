@@ -10,6 +10,8 @@ interface NexusTask {
   status: "pending" | "analyzing" | "resolved";
   resolution_steps: string[];
   ai_output: any;
+  recovery_time?: number;
+  retry_count?: number;
 }
 
 export function NexusLiveMonitor({ adminKey }: { adminKey: string | null }) {
@@ -113,6 +115,38 @@ export function NexusLiveMonitor({ adminKey }: { adminKey: string | null }) {
         </div>
       </div>
 
+      {/* Resilience Metrics (MTTR) - Axel Perez Requirement */}
+      {tasks.some(t => t.status === 'resolved' && t.recovery_time) && (
+        <div className="px-6 py-4 bg-emerald-500/5 border-b border-white/5 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+             <div className="flex flex-col">
+               <span className="text-[8px] text-emerald-500/60 uppercase font-black tracking-widest">Resilience MTTR</span>
+               <div className="flex items-center gap-2">
+                 <Zap className="w-3 h-3 text-emerald-400 animate-pulse" />
+                 <span className="text-sm font-black text-white font-mono">
+                    {(tasks
+                      .filter(t => t.status === 'resolved' && t.recovery_time)
+                      .slice(0, 5)
+                      .reduce((acc, curr) => acc + (curr.recovery_time || 0), 0) / 
+                      Math.max(1, tasks.filter(t => t.status === 'resolved' && t.recovery_time).slice(0, 5).length)
+                    ).toFixed(2)}s
+                 </span>
+               </div>
+             </div>
+             <div className="h-8 w-px bg-white/5" />
+             <div className="flex flex-col">
+               <span className="text-[8px] text-blue-500/60 uppercase font-black tracking-widest">Efficiency</span>
+               <span className="text-sm font-black text-white font-mono">
+                 {Math.round(100 - (tasks.filter(t => t.retry_count && t.retry_count > 1).length * 5))}%
+               </span>
+             </div>
+          </div>
+          <div className="px-3 py-1 bg-emerald-500/10 rounded-full border border-emerald-500/20">
+            <span className="text-[9px] font-black text-emerald-400 uppercase italic">Tier 4 Ops Ready</span>
+          </div>
+        </div>
+      )}
+
       <div 
         ref={scrollRef}
         className="divide-y divide-white/5 max-h-[600px] overflow-y-auto custom-scrollbar"
@@ -139,7 +173,10 @@ export function NexusLiveMonitor({ adminKey }: { adminKey: string | null }) {
                   {/* Action Engine Metadata (Nexus Arms) */}
                   {task.ai_output?.action_executed && (
                     <div className="flex flex-wrap items-center gap-2 mt-2">
-                      <div className="flex items-center gap-1.5 px-1.5 py-0.5 bg-black/40 rounded border border-white/5">
+                      <div 
+                        className="flex items-center gap-1.5 px-1.5 py-0.5 bg-black/40 rounded border border-white/5 cursor-help group/tip relative"
+                        title={`MTTR: ${task.recovery_time || 0}s | Intentos: ${task.retry_count || 0}`}
+                      >
                         <Zap className={`w-2.5 h-2.5 ${task.ai_output.was_successful ? "text-sentinel" : "text-amber-500"}`} />
                         <span className="text-[8px] font-black uppercase tracking-tighter text-slate-600">Action:</span>
                         <span className="text-[9px] font-mono font-bold text-white leading-none">{task.ai_output.action_executed}</span>
