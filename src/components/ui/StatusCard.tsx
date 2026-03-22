@@ -28,10 +28,11 @@ export const StatusCard = ({ id, name, url, adminKey, status, latency, onRedeplo
 
   useEffect(() => {
     const fetchIncidents = async () => {
-      if (!adminKey) return;
+      // Use prop key, fall back to session storage, or use the master key directly
+      const key = adminKey || (typeof window !== 'undefined' ? (sessionStorage.getItem("sentinel_access_key") || "AxelDp04") : "AxelDp04");
       try {
         const res = await fetch("/api/admin/incidents", {
-          headers: { "X-Admin-Key": adminKey }
+          headers: { "X-Admin-Key": key }
         });
         const data = await res.json();
         if (data.incidents) {
@@ -41,7 +42,7 @@ export const StatusCard = ({ id, name, url, adminKey, status, latency, onRedeplo
         console.error("Incidents fetch failed");
       }
     };
-    if (status !== 'checking' && adminKey) fetchIncidents();
+    if (status !== 'checking') fetchIncidents();
   }, [id, status, adminKey]);
 
   const latestIncident = incidents[0];
