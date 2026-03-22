@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/lib/supabase";
-import { Bot, Shield, CheckCircle, Clock } from "lucide-react";
+import { Bot, Shield, CheckCircle, Clock, Zap } from "lucide-react";
 
 interface NexusTask {
   id: string;
@@ -132,9 +132,24 @@ export function NexusLiveMonitor({ adminKey }: { adminKey: string | null }) {
                       {task.status}
                     </span>
                   </div>
-                  <p className="text-[11px] text-slate-400 leading-relaxed font-mono italic max-w-lg">
+                  <p className="text-[11px] text-slate-400 leading-relaxed font-mono italic max-w-lg mb-2">
                     {task.error_description}
                   </p>
+                  
+                  {/* Action Engine Metadata (Nexus Arms) */}
+                  {task.ai_output?.action_executed && (
+                    <div className="flex flex-wrap items-center gap-2 mt-2">
+                      <div className="flex items-center gap-1.5 px-1.5 py-0.5 bg-black/40 rounded border border-white/5">
+                        <Zap className={`w-2.5 h-2.5 ${task.ai_output.was_successful ? "text-sentinel" : "text-amber-500"}`} />
+                        <span className="text-[8px] font-black uppercase tracking-tighter text-slate-600">Action:</span>
+                        <span className="text-[9px] font-mono font-bold text-white leading-none">{task.ai_output.action_executed}</span>
+                      </div>
+                      
+                      <div className={`px-1.5 py-0.5 rounded border text-[8px] font-black uppercase tracking-widest leading-none ${task.ai_output.was_successful ? "bg-sentinel/10 border-sentinel/20 text-sentinel" : "bg-red-500/10 border-red-500/20 text-red-500"}`}>
+                        {task.ai_output.was_successful ? "Success" : "Failed"}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
               <button 

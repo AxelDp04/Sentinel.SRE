@@ -1,7 +1,7 @@
 import os
 import requests
 
-def send_report_to_vercel(project_name: str, error_description: str, solution: str):
+def send_report_to_vercel(project_name: str, error_description: str, solution: str, was_successful: bool = True):
     """
     Función para notificar el cierre de una tarea al Dashboard de Vercel.
     """
@@ -17,7 +17,8 @@ def send_report_to_vercel(project_name: str, error_description: str, solution: s
         "incidentData": {
             "project_name": project_name,
             "error_description": error_description,
-            "solution": solution
+            "solution": solution,
+            "was_successful": was_successful
         }
     }
 

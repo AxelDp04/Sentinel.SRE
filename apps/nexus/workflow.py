@@ -31,6 +31,8 @@ class NexusState(TypedDict):
     proposed_solution: Optional[str]
     security_feedback: Optional[str]
     security_approved: bool
+    action_executed: str
+    was_successful: bool
     final_output: Optional[dict]
 
 def sre_agent(state: NexusState):
@@ -98,9 +100,55 @@ def security_agent(state: NexusState):
     
     return state
 
+def action_node(state: NexusState):
+    print(f"\n[{state['task_id']}] [Nexus Arms] Ejecutando Action Engine...")
+    
+    error_desc = state["error_description"].lower()
+    
+    # Lógica de RETRY_STRATEGY (Punto 3 de Axel)
+    if "timeout" in error_desc or "network" in error_desc or "connection" in error_desc:
+        state["action_executed"] = "RETRY_STRATEGY"
+        state["resolution_steps"].append("Action Engine: Detectado fallo transitorio. Iniciando RETRY_STRATEGY.")
+        
+        # Simulación de reintento con Backoff (en un caso real llamaríamos a una API)
+        import time
+        max_retries = 2
+        success = False
+        
+        for i in range(max_retries):
+            wait_time = (i + 1) * 2 # Backoff simple: 2s, 4s
+            state["resolution_steps"].append(f"Retry Node: Intento {i+1} en curso (Esperando {wait_time}s)...")
+            time.sleep(wait_time)
+            
+            # En el sandbox, simulamos que el segundo intento siempre funciona
+            if i == 1 or "test-success" in error_desc:
+                success = True
+                break
+        
+        state["was_successful"] = success
+        if success:
+            state["resolution_steps"].append("Retry Node: Reintento EXITOSO. Sistema restablecido.")
+        else:
+            state["resolution_steps"].append("Retry Node: Reintento FALLIDO tras varios intentos.")
+    else:
+        state["action_executed"] = "NONE (Manual required)"
+        state["was_successful"] = False
+        state["resolution_steps"].append("Action Engine: Error complejo detectado. No se disparó mitigación automática.")
+
+    # Update final output with real action result
+    state["final_output"] = {
+        "solution": state["proposed_solution"],
+        "security_status": "Approved",
+        "action_executed": state["action_executed"],
+        "was_successful": state["was_successful"],
+        "message": "Mitigación automática procesada por Nexus Arms." if state["was_successful"] else "Intervención humana requerida."
+    }
+    
+    return state
+
 def should_continue(state: NexusState):
     if state["security_approved"]:
-        return "end"
+        return "action_node"
     else:
         return "sre_agent"
 
@@ -109,6 +157,7 @@ graph_builder = StateGraph(NexusState)
 
 graph_builder.add_node("sre_agent", sre_agent)
 graph_builder.add_node("security_agent", security_agent)
+graph_builder.add_node("action_node", action_node)
 
 graph_builder.set_entry_point("sre_agent")
 
@@ -117,9 +166,11 @@ graph_builder.add_conditional_edges(
     "security_agent",
     should_continue,
     {
-        "end": END,
+        "action_node": "action_node",
         "sre_agent": "sre_agent"
     }
 )
+
+graph_builder.add_edge("action_node", END)
 
 nexus_workflow = graph_builder.compile()

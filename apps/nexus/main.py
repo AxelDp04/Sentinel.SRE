@@ -2,7 +2,7 @@ import asyncio
 import os
 from fastapi import FastAPI, BackgroundTasks
 from contextlib import asynccontextmanager
-from database import get_pending_tasks, update_task_status, append_resolution_step, update_task_resolved
+from database import get_pending_tasks, update_task_status, append_resolution_step, update_task_resolved, supabase
 from workflow import nexus_workflow
 
 # Polling task flag
@@ -51,15 +51,21 @@ async def poll_supabase():
                     for step in final_state["resolution_steps"]:
                         append_resolution_step(task_id, step)
                         
-                    update_task_resolved(task_id, final_state["final_output"])
-                    print(f"[{task_id}] [Updating Supabase] Resultado inyectado y resuelto.\n")
+                    update_task_resolved(
+                        task_id, 
+                        final_state["final_output"],
+                        action_executed=final_state.get("action_executed", "none"),
+                        was_successful=final_state.get("was_successful", True)
+                    )
+                    print(f"[{task_id}] [Action Engine] Resultado inyectado: {final_state.get('action_executed')} (Success: {final_state.get('was_successful')})\n")
 
                     # [NEXUS VIGILANTE] - Notificación Proactiva (Gatillo Autónomo)
                     from services.whatsapp_service import send_report_to_vercel
                     send_report_to_vercel(
                         project_name=project_name,
                         error_description=error_desc,
-                        solution=final_state["final_output"].get("solution", "Ver panel para detalles.")
+                        solution=final_state["final_output"].get("solution", "Ver panel para detalles."),
+                        was_successful=final_state.get("was_successful", True)
                     )
             
         except Exception as e:
@@ -116,6 +122,30 @@ app = FastAPI(title="Nexus Engine", lifespan=lifespan)
 @app.get("/")
 def read_root():
     return {"status": "Nexus Engine is running! Listening to Supabase..."}
+
+@app.post("/api/nexus/test-action")
+async def test_action_trigger(background_tasks: BackgroundTasks):
+    """
+    Sandbox endpoint to simulate a critical error and test the Action Engine (RETRY_STRATEGY).
+    """
+    from database import supabase
+    if not supabase: return {"error": "Supabase not connected"}
+    
+    test_task = {
+        "project_name": "SANDBOX_TEST",
+        "error_description": "CRITICAL: Connection Timeout in Nexus_Gateway. (Triggering RETRY_STRATEGY)",
+        "status": "pending"
+    }
+    
+    try:
+        res = supabase.table("nexus_tasks").insert(test_task).execute()
+        return {
+            "status": "Sandbox trigger successful",
+            "message": "Nexus Arms v1.0 will now attempt a mitigation.",
+            "data": res.data
+        }
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 
 @app.get("/health")
 def health_check():

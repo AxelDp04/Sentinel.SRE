@@ -31,7 +31,7 @@ export async function POST(req: Request) {
 
     if (isNexusReport && incidentData) {
       // PROCESAMIENTO PROACTIVO NEXUS (FORMATO COMPACTO - AXEL PEREZ)
-      const { project_name, error_description, solution } = incidentData;
+      const { project_name, error_description, solution, was_successful } = incidentData;
       const timestamp = new Date().toLocaleString("es-DO", { timeZone: "America/Santo_Domingo" });
       
       // Truncar para evitar el límite de 1600 de Twilio (objetivo < 1000)
@@ -39,13 +39,19 @@ export async function POST(req: Request) {
       const cleanError = error_description.length > maxLen ? error_description.substring(0, maxLen) + "..." : error_description;
       const cleanSolution = solution.length > maxLen ? solution.substring(0, maxLen) + "..." : solution;
 
+      const statusTag = was_successful ? "✅ SISTEMA RESTABLECIDO" : "❌ ACCIÓN FALLIDA";
+      const statusDetail = was_successful 
+        ? "Bajo supervisión de Nexus." 
+        : "Intervención humana requerida URGENTE.";
+
       finalReport = `🛡️ SENTINEL OPS - INFORME TÉCNICO\n` +
                     `Hola Ing. Axel Perez, un placer.\n\n` +
                     `Alert: Anomalía en ${project_name}.\n` +
                     `📝 Error: ${cleanError}\n` +
-                    `💡 Solución: ${cleanSolution}\n` +
+                    `💡 Acción: ${cleanSolution}\n` +
                     `⏰ Cierre: ${timestamp}\n\n` +
-                    `Status: ESTABLE bajo supervisión de Nexus.`;
+                    `Status: ${statusTag}\n` +
+                    `${statusDetail}`;
     } else {
       // 1. Fetch incidents from the last 24 Hours (Direct REST call to bypass PGRST205 schema cache bug)
       const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
