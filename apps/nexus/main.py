@@ -93,6 +93,41 @@ async def poll_supabase():
 async def lifespan(app: FastAPI):
     global is_polling
     is_polling = True
+    
+    # [NEXUS STARTUP DIAGNOSTIC] - Axel Perez Insight
+    print("\n" + "="*50)
+    print("🚀 NEXUS ENGINE STARTUP DIAGNOSTIC")
+    sentinel_url = os.getenv("SENTINEL_API_URL") or os.getenv("NEXT_PUBLIC_SITE_URL") or "UNDEFINED"
+    print(f"📡 SENTINEL_API_URL IS: {sentinel_url}")
+    print("="*50 + "\n")
+
+    # Immediate WhatsApp Ping Test
+    try:
+        import requests
+        admin_key = os.getenv("ADMIN_KEY") or "AxelDp04"
+        ping_payload = {
+            "isNexusReport": True,
+            "incidentData": {
+                "project_name": "NEXUS_STARTUP_SYNC",
+                "error_description": "Prueba automática de arranque del Vigilante.",
+                "solution": "Si recibes esto, el puente Vercel <-> Twilio está OPERATIVO."
+            }
+        }
+        test_headers = { "X-Admin-Key": admin_key }
+        test_url = f"{sentinel_url.rstrip('/')}/api/admin/whatsapp/report"
+        
+        print(f"[*] Vigilante: Enviando PING de arranque a {test_url}...")
+        test_res = requests.post(test_url, json=ping_payload, headers=test_headers, timeout=15)
+        
+        if test_res.status_code == 200:
+            print(f"✅ VIGILANTE STARTUP PING: SUCCESS (200 OK)")
+        else:
+            print(f"❌ VIGILANTE STARTUP PING: FAILED ({test_res.status_code})")
+            print(f"📂 ERROR DETAIL: {test_res.text}")
+            
+    except Exception as startup_err:
+        print(f"💥 VIGILANTE STARTUP EXCEPTION: {startup_err}")
+
     asyncio.create_task(poll_supabase())
     yield
     is_polling = False
