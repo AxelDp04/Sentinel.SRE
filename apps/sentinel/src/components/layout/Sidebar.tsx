@@ -20,7 +20,7 @@ interface SidebarProps {
 
 export const Sidebar = ({ onToggleSafeMode, isSafeMode }: SidebarProps) => {
   return (
-    <aside className="w-64 bg-[#050505] border-r border-white/5 flex flex-col h-full shrink-0">
+    <aside className="hidden md:flex w-64 bg-[#050505] border-r border-white/5 flex-col h-full shrink-0">
       <div className="p-6 flex items-center gap-3 mb-8">
         <div className="p-2 bg-red-500/10 rounded-lg ring-1 ring-red-500/30">
           <Shield className="w-6 h-6 text-red-500" />

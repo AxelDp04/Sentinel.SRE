@@ -16,8 +16,8 @@ export const VitalityFlowMonitor = () => {
       </div>
 
       {/* Monitor de Pulso Central (ECG) */}
-      <div className="flex-1 flex justify-center relative h-16 max-w-2xl">
-        <svg viewBox="0 0 400 100" className="w-full h-full opacity-40">
+      <div className="flex-1 flex justify-center relative h-12 md:h-16 w-full max-w-2xl px-2">
+        <svg viewBox="0 0 400 100" className="w-full h-full opacity-40 overflow-visible">
           {/* Static ECG Wave Background */}
           <path
             d="M0 50 L140 50 L145 40 L150 60 L155 20 L160 80 L165 50 L170 50 L300 50"

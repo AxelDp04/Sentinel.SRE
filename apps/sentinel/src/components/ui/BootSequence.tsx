@@ -40,21 +40,21 @@ export const BootSequence = ({ onComplete }: { onComplete: () => void }) => {
       <div className="fixed inset-0 cyber-grid opacity-10 pointer-events-none" />
       <div className="fixed inset-0 bg-gradient-to-t from-emerald-500/10 via-transparent to-transparent pointer-events-none" />
 
-      <div className="max-w-xl w-full space-y-8 relative">
+      <div className="max-w-xl w-full space-y-4 sm:space-y-8 relative">
         {/* Header Icon */}
-        <div className="flex justify-center mb-12">
+        <div className="flex justify-center mb-6 sm:mb-12">
           <div className="relative">
-             <div className="absolute inset-0 bg-emerald-500/20 blur-[40px] animate-pulse" />
-             <Shield className="w-16 h-16 text-emerald-500 relative z-10" />
+             <div className="absolute inset-0 bg-emerald-500/20 blur-[30px] sm:blur-[40px] animate-pulse" />
+             <Shield className="w-12 h-12 sm:w-16 sm:h-16 text-emerald-500 relative z-10" />
           </div>
         </div>
 
         {/* Progress Log */}
-        <div className="space-y-2 max-h-[200px] overflow-hidden">
+        <div className="space-y-1.5 sm:space-y-2 max-h-[150px] sm:max-h-[200px] overflow-hidden">
           {logs.map((log, i) => (
-            <div key={i} className="flex items-start gap-4 text-[10px] sm:text-[12px] animate-in slide-in-from-left-2 duration-300">
-              <span className="text-slate-600">[{new Date().toLocaleTimeString()}]</span>
-              <span className={i === logs.length - 1 ? "text-emerald-400 font-black" : "text-slate-400"}>
+            <div key={i} className="flex items-start gap-3 sm:gap-4 text-[9px] sm:text-[12px] animate-in slide-in-from-left-2 duration-300">
+              <span className="text-slate-600 opacity-50">[{new Date().toLocaleTimeString([], { hour12: false, minute: '2-digit', second: '2-digit' })}]</span>
+              <span className={i === logs.length - 1 ? "text-emerald-400 font-black" : "text-slate-500"}>
                 {log}
               </span>
             </div>

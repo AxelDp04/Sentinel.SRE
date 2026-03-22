@@ -147,7 +147,7 @@ export function NexusLiveMonitor({ adminKey }: { adminKey: string | null }) {
 
             {/* AI Thought Logs (Toggleable) */}
             {showLogs[task.id] && task.resolution_steps && task.resolution_steps.length > 0 && (
-              <div className="ml-14 p-4 bg-black/40 rounded-xl border border-white/5 space-y-2 animate-in slide-in-from-top-2 duration-300">
+              <div className="ml-4 md:ml-14 p-4 bg-black/40 rounded-xl border border-white/5 space-y-2 animate-in slide-in-from-top-2 duration-300">
                 {task.resolution_steps.map((step, idx) => (
                    <div key={idx} className="flex items-start gap-3 text-[10px] text-slate-500 font-mono tracking-tight leading-relaxed">
                      <div className="mt-1">{getStepIcon(step)}</div>
@@ -159,15 +159,15 @@ export function NexusLiveMonitor({ adminKey }: { adminKey: string | null }) {
 
             {/* Final AI Output */}
             {task.status === "resolved" && task.ai_output && (
-               <div className="ml-14 p-5 bg-emerald-500/5 border border-emerald-500/10 rounded-xl text-xs text-emerald-100/80 font-mono animate-in zoom-in-95 duration-500 relative overflow-hidden group">
-                  <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-30 transition-opacity">
+               <div className="ml-4 md:ml-14 p-4 md:p-5 bg-emerald-500/5 border border-emerald-500/10 rounded-xl text-[11px] md:text-xs text-emerald-100/80 font-mono animate-in zoom-in-95 duration-500 relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-30 transition-opacity hidden md:block">
                     <CheckCircle className="w-12 h-12" />
                   </div>
                   <div className="flex items-center gap-2 mb-3 pb-3 border-b border-emerald-500/10">
                     <CheckCircle className="w-4 h-4 text-emerald-400" />
-                    <strong className="text-[9px] uppercase tracking-[0.3em] font-black text-emerald-400">Acción de Mitigación Nexus</strong>
+                    <strong className="text-[8px] md:text-[9px] uppercase tracking-[0.3em] font-black text-emerald-400">Mitigación Nexus</strong>
                   </div>
-                  <pre className="whitespace-pre-wrap font-sans text-[12px] leading-relaxed italic">
+                  <pre className="whitespace-pre-wrap font-sans text-[11px] md:text-[12px] leading-relaxed italic">
                     {task.ai_output.solution}
                   </pre>
                </div>

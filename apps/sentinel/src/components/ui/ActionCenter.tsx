@@ -74,67 +74,67 @@ export const ActionCenter = ({ onForceRefresh, safeMode, setSafeMode }: ActionCe
   return (
     <div className="flex flex-col gap-8 w-full">
       {/* Control Panel */}
-      <div className="glass p-8 flex flex-col rounded-3xl border border-white/5 shadow-2xl bg-slate-900/60 backdrop-blur-md">
-        <div className="flex flex-col gap-6 mb-8 border-b border-white/5 pb-8">
+      <div className="glass p-4 sm:p-8 flex flex-col rounded-3xl border border-white/5 shadow-2xl bg-slate-900/60 backdrop-blur-md">
+        <div className="flex flex-col gap-6 mb-8 border-b border-white/5 pb-8 focus-within:border-sentinel/30 transition-colors">
           <div className="flex items-center gap-4">
             <div className="w-10 h-10 rounded-full bg-sentinel/10 flex items-center justify-center">
               <Zap className="w-5 h-5 text-sentinel" />
             </div>
-            <h3 className="text-xl font-bold uppercase tracking-widest text-white">Maintenance Command</h3>
+            <h3 className="text-lg sm:text-xl font-bold uppercase tracking-widest text-white">Maintenance Command</h3>
           </div>
           
           <div className="flex items-center justify-between bg-black/40 p-4 rounded-xl border border-white/5">
-            <span className={`text-[11px] font-mono px-2 uppercase tracking-widest ${safeMode ? "text-slate-500" : "text-red-400 font-bold animate-pulse"}`}>
+            <span className={`text-[9px] sm:text-[11px] font-mono px-2 uppercase tracking-widest ${safeMode ? "text-slate-500" : "text-red-400 font-bold animate-pulse"}`}>
               {safeMode ? "Safe Mode: Locked" : "ARMED / UNLOCKED"}
             </span>
             <button 
               onClick={() => setSafeMode(!safeMode)}
-              className={`w-14 h-7 rounded-full transition-all duration-300 relative ${safeMode ? "bg-slate-700" : "bg-red-500 shadow-[0_0_20px_#ef4444]"}`}
+              className={`w-12 h-6 sm:w-14 sm:h-7 rounded-full transition-all duration-300 relative ${safeMode ? "bg-slate-700" : "bg-red-500 shadow-[0_0_20px_#ef4444]"}`}
             >
-              <div className={`absolute top-1 w-5 h-5 rounded-full bg-white transition-all duration-300 ${safeMode ? "left-1" : "left-8"}`}></div>
+              <div className={`absolute top-0.5 sm:top-1 w-5 h-5 rounded-full bg-white transition-all duration-300 ${safeMode ? "left-0.5 sm:left-1" : "left-6 sm:left-8"}`}></div>
             </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-6 h-full text-center">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 h-full text-center">
           {/* Action: Force Refresh */}
           <button 
             disabled={loadingAction !== null}
             onClick={() => handleAction("Force Health Check", onForceRefresh)}
-            className="flex flex-col items-center justify-center gap-4 p-8 min-h-[140px] glass rounded-2xl hover:bg-white/10 transition-all group disabled:opacity-30 disabled:cursor-not-allowed border border-white/10 hover:border-sentinel/50 shadow-xl"
+            className="flex flex-col items-center justify-center gap-4 p-6 sm:p-8 min-h-[120px] sm:min-h-[140px] glass rounded-2xl hover:bg-white/10 transition-all group disabled:opacity-30 disabled:cursor-not-allowed border border-white/10 hover:border-sentinel/50 shadow-xl"
           >
-            <RefreshCw className={`w-8 h-8 ${loadingAction === "Force Health Check" ? "animate-spin text-sentinel" : "text-slate-400 group-hover:text-sentinel transition-colors"}`} />
-            <span className="text-[10px] font-mono uppercase tracking-widest text-slate-400 group-hover:text-white leading-tight">Force<br/>Refresh</span>
+            <RefreshCw className={`w-7 h-7 sm:w-8 sm:h-8 ${loadingAction === "Force Health Check" ? "animate-spin text-sentinel" : "text-slate-400 group-hover:text-sentinel transition-colors"}`} />
+            <span className="text-[9px] sm:text-[10px] font-mono uppercase tracking-widest text-slate-400 group-hover:text-white leading-tight">Force<br/>Refresh</span>
           </button>
 
           {/* Action: Purge Cache */}
           <button 
             disabled={safeMode || loadingAction !== null}
             onClick={() => handleAction("Purge Vercel Cache")}
-            className="flex flex-col items-center justify-center gap-4 p-8 min-h-[140px] glass rounded-2xl hover:bg-white/10 transition-all group disabled:opacity-30 disabled:cursor-not-allowed border border-white/10 hover:border-yellow-500/50 shadow-xl"
+            className="flex flex-col items-center justify-center gap-4 p-6 sm:p-8 min-h-[120px] sm:min-h-[140px] glass rounded-2xl hover:bg-white/10 transition-all group disabled:opacity-30 disabled:cursor-not-allowed border border-white/10 hover:border-yellow-500/50 shadow-xl"
           >
-            <Trash2 className={`w-8 h-8 ${loadingAction === "Purge Vercel Cache" ? "animate-bounce text-yellow-400" : "text-slate-400 group-hover:text-yellow-400 transition-colors"}`} />
-            <span className="text-[10px] font-mono uppercase tracking-widest text-slate-400 group-hover:text-white leading-tight">Purge<br/>Cache</span>
+            <Trash2 className={`w-7 h-7 sm:w-8 sm:h-8 ${loadingAction === "Purge Vercel Cache" ? "animate-bounce text-yellow-400" : "text-slate-400 group-hover:text-yellow-400 transition-colors"}`} />
+            <span className="text-[9px] sm:text-[10px] font-mono uppercase tracking-widest text-slate-400 group-hover:text-white leading-tight">Purge<br/>Cache</span>
           </button>
 
           {/* Action: DB Vacuum */}
           <button 
             disabled={safeMode || loadingAction !== null}
             onClick={() => handleAction("Database Vacuum")}
-            className="flex flex-col items-center justify-center gap-4 p-8 min-h-[140px] glass rounded-2xl hover:bg-white/10 transition-all group disabled:opacity-30 disabled:cursor-not-allowed border border-white/10 hover:border-blue-500/50 shadow-xl"
+            className="flex flex-col items-center justify-center gap-4 p-6 sm:p-8 min-h-[120px] sm:min-h-[140px] glass rounded-2xl hover:bg-white/10 transition-all group disabled:opacity-30 disabled:cursor-not-allowed border border-white/10 hover:border-blue-500/50 shadow-xl"
           >
-            <ShieldAlert className={`w-8 h-8 ${loadingAction === "Database Vacuum" ? "animate-pulse text-blue-400" : "text-slate-400 group-hover:text-blue-400 transition-colors"}`} />
-            <span className="text-[10px] font-mono uppercase tracking-widest text-slate-400 group-hover:text-white leading-tight">DB<br/>Vacuum</span>
+            <ShieldAlert className={`w-7 h-7 sm:w-8 sm:h-8 ${loadingAction === "Database Vacuum" ? "animate-pulse text-blue-400" : "text-slate-400 group-hover:text-blue-400 transition-colors"}`} />
+            <span className="text-[9px] sm:text-[10px] font-mono uppercase tracking-widest text-slate-400 group-hover:text-white leading-tight">DB<br/>Vacuum</span>
           </button>
 
           {/* Action: EMERGENCY ROLLBACK */}
           <button 
             disabled={safeMode || loadingAction !== null}
             onClick={() => handleAction("Emergency Rollback")}
-            className="flex flex-col items-center justify-center gap-4 p-8 min-h-[140px] glass rounded-2xl bg-red-500/5 hover:bg-red-500/20 transition-all group disabled:opacity-30 disabled:cursor-not-allowed border border-red-500/30 hover:border-red-500/60 shadow-xl shadow-red-500/10"
+            className="flex flex-col items-center justify-center gap-4 p-6 sm:p-8 min-h-[120px] sm:min-h-[140px] glass rounded-2xl bg-red-500/5 hover:bg-red-500/20 transition-all group disabled:opacity-30 disabled:cursor-not-allowed border border-red-500/30 hover:border-red-500/60 shadow-xl shadow-red-500/10"
           >
-            <RotateCcw className={`w-8 h-8 ${loadingAction === "Emergency Rollback" ? "animate-spin text-red-500" : "text-red-400/80 group-hover:text-red-500 transition-colors"}`} />
-            <span className="text-[10px] font-mono uppercase tracking-widest text-red-400/80 group-hover:text-red-500 font-bold leading-tight">Emergency<br/>Rollback</span>
+            <RotateCcw className={`w-7 h-7 sm:w-8 sm:h-8 ${loadingAction === "Emergency Rollback" ? "animate-spin text-red-500" : "text-red-400/80 group-hover:text-red-500 transition-colors"}`} />
+            <span className="text-[9px] sm:text-[10px] font-mono uppercase tracking-widest text-red-400/80 group-hover:text-red-500 font-bold leading-tight">Emergency<br/>Rollback</span>
           </button>
         </div>
 

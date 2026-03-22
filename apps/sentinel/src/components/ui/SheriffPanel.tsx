@@ -162,7 +162,40 @@ export const SheriffPanel = ({ adminKey: propKey }: { adminKey?: string | null }
       </div>
 
       <div className="border border-white/5 rounded overflow-hidden">
-        <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
+        {/* Mobile View: Identity Cards */}
+        <div className="md:hidden space-y-4 p-4 max-h-[500px] overflow-y-auto custom-scrollbar bg-black/20">
+          {loading && filteredUsers.length === 0 ? (
+            <div className="py-8 text-center text-slate-600 animate-pulse uppercase tracking-[0.3em] text-[10px]">Scanning Identity Profiles...</div>
+          ) : filteredUsers.map(user => (
+            <div key={user.id} className={`p-4 rounded-xl border border-white/5 space-y-4 ${user.is_live ? 'bg-sentinel/5' : 'bg-white/5'}`}>
+              <div className="flex justify-between items-start">
+                <div className="flex gap-3">
+                  <User className={`w-4 h-4 mt-1 ${user.is_admin ? 'text-red-500' : 'opacity-50'}`} />
+                  <div className="flex flex-col">
+                    <span className="text-xs font-bold text-white uppercase tracking-tight">{user.name}</span>
+                    <span className="text-[10px] text-slate-500 font-mono italic">{user.email}</span>
+                  </div>
+                </div>
+                {user.is_admin && <span className="text-[8px] bg-red-600 px-1.5 py-0.5 rounded text-white font-black animate-pulse">ROOT</span>}
+              </div>
+              
+              <div className="flex justify-between items-center pt-3 border-t border-white/5">
+                <div className="flex flex-col gap-1">
+                  <span className="text-[8px] text-slate-600 uppercase font-black">Project</span>
+                  <span className="text-[10px] text-blue-400 font-bold uppercase">{user.project}</span>
+                </div>
+                <div className="flex gap-3 pt-1">
+                  <ActionIconButton icon={<Eye className="w-4 h-4" />} tooltip="Ver Actividad" onClick={() => openDrilldown(user)} />
+                  <ActionIconButton icon={<LogOut className="w-4 h-4" />} tooltip="Force Logout" color="hover:text-amber-500" onClick={() => handleUserAction(user.id, user.project, 'logout')} />
+                  <ActionIconButton icon={<Key className="w-4 h-4" />} tooltip="Reset Password" color="hover:text-blue-500" onClick={() => handleUserAction(user.id, user.project, 'reset-password')} />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop View: Table */}
+        <div className="hidden md:block max-h-[400px] overflow-y-auto custom-scrollbar">
           <table className="w-full text-left text-[11px] font-mono">
             <thead className="bg-[#0f172a] sticky top-0 backdrop-blur-sm z-10 border-b border-white/10">
               <tr>

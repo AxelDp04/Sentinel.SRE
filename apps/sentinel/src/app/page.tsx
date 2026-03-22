@@ -13,6 +13,7 @@ import { getStoredAdminKey, isValidAdminKey } from "@/lib/auth";
 import { PROJECTS } from "@/constants/projects";
 import { NexusLiveMonitor } from "@/components/ui/NexusLiveMonitor";
 import { SheriffPanel } from "@/components/ui/SheriffPanel";
+import { MobileNavBar } from "@/components/layout/MobileNavBar";
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
@@ -179,6 +180,9 @@ export default function Home() {
           </div>
         </div>
       </div>
+      
+      {/* Tactical Mobile Navigation */}
+      <MobileNavBar onToggleSafeMode={setIsSafeMode} isSafeMode={isSafeMode} />
     </main>
   );
 }
