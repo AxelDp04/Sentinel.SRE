@@ -103,36 +103,51 @@ def action_node(state: NexusState):
     import time
     
     error_desc = state["error_description"].lower()
+    project = state.get("project_name", "").upper()
     
-    # Lógica de RETRY_STRATEGY (Punto 3 de Axel)
-    if "timeout" in error_desc or "network" in error_desc or "connection" in error_desc:
-        state["action_executed"] = "RETRY_STRATEGY"
-        state["resolution_steps"].append("Action Engine: Detectado fallo transitorio. Iniciando RETRY_STRATEGY.")
-        
+    # Lógica Adaptativa por Proyecto (AuditaCar Transition)
+    if project == "AUDITACAR":
+        if "api" in error_desc or "gateway" in error_desc:
+            state["action_executed"] = "API_RECONNECT"
+            state["resolution_steps"].append("Action Engine: Re-sincronizando API Gateway de AuditaCar...")
+        elif "db" in error_desc or "database" in error_desc or "pool" in error_desc:
+            state["action_executed"] = "DB_REBOOT_SIM"
+            state["resolution_steps"].append("Action Engine: Reiniciando instancia de base de datos AuditaCar...")
+        else:
+            state["action_executed"] = "RETRY_STRATEGY"
+            state["resolution_steps"].append("Action Engine: Iniciando RETRY_STRATEGY para AuditaCar.")
+    else:
+        # Default RETRY_STRATEGY (Punto 3 de Axel)
+        if "timeout" in error_desc or "network" in error_desc or "connection" in error_desc:
+            state["action_executed"] = "RETRY_STRATEGY"
+            state["resolution_steps"].append("Action Engine: Detectado fallo transitorio. Iniciando RETRY_STRATEGY.")
+        else:
+            state["action_executed"] = "MANUAL_INTERVENTION_REQUIRED"
+            state["was_successful"] = False
+            state["resolution_steps"].append("Action Engine: Error complejo detectado. Mitigación automática abortada.")
+
+    # Ejecución de la simulación (Si no es manual)
+    if state["action_executed"] != "MANUAL_INTERVENTION_REQUIRED":
         # Simulación de reintento con Backoff
         max_retries = 2
         success = False
         
         for i in range(max_retries):
-            state["retry_count"] += 1
+            state["retry_count"] = i + 1
             wait_time = (i + 1) * 2 # Backoff simple: 2s, 4s
-            state["resolution_steps"].append(f"Retry Node: Intento {i+1} en curso (Esperando {wait_time}s)...")
+            state["resolution_steps"].append(f"Action Node: {state['action_executed']} en curso (Esperando {wait_time}s)...")
             time.sleep(wait_time)
             
-            # En el sandbox, simulamos que el segundo intento siempre funciona
-            if i == 1 or "test-success" in error_desc:
+            # Simulamos éxito en el segundo intento siempre
+            if i == 1:
                 success = True
                 break
         
         state["was_successful"] = success
         if success:
-            state["resolution_steps"].append("Retry Node: Reintento EXITOSO.")
+            state["resolution_steps"].append(f"Action Node: {state['action_executed']} EXITOSO.")
         else:
-            state["resolution_steps"].append("Retry Node: Reintento FALLIDO.")
-    else:
-        state["action_executed"] = "MANUAL_INTERVENTION_REQUIRED"
-        state["was_successful"] = False
-        state["resolution_steps"].append("Action Engine: Error complejo detectado. Mitigación automática abortada.")
+            state["resolution_steps"].append(f"Action Node: {state['action_executed']} FALLIDO.")
 
     # Cierre de métrica de tiempo
     state["end_time"] = time.time()

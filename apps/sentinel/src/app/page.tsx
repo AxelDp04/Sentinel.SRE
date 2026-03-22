@@ -31,26 +31,35 @@ export default function Home() {
   const fetchEcosystemData = useCallback(async (key: string) => {
     try {
       setLoading(true);
+      
+      // 1. Fetch Users (Human Telemetry)
       const userRes = await fetch("/api/admin/users", {
         headers: { "X-Admin-Key": key }
       });
-      if (userRes.status === 401) {
-        setIsAuthenticated(false);
-        return;
-      }
       const userData = await userRes.json();
       if (userData.users) setUsers(userData.users);
 
+      // 2. Fetch Active Incidents (System Health)
+      const { data: activeTasks } = await supabase
+        .from("nexus_tasks")
+        .select("project_name, status")
+        .in("status", ["pending", "analyzing"]);
+
+      const activeProjectNames = (activeTasks || []).map(t => t.project_name.toLowerCase());
+
+      // 3. Sync Ecosystem Vitality Matrix
       const health: Record<string, any> = {};
       PROJECTS.forEach(p => {
+        const isOffline = activeProjectNames.includes(p.id.toLowerCase());
         health[p.id] = {
-           status: p.id === 'arqovex' ? 'online' : (Math.random() > 0.1 ? 'online' : 'offline'),
-           latency: Math.floor(Math.random() * 40) + 10
+           status: isOffline ? 'offline' : 'online',
+           latency: isOffline ? 999 : (Math.floor(Math.random() * 40) + 10)
         };
       });
       setHealthData(health);
+
     } catch (err) {
-      console.error("Failed to sync ecosystem telemetry");
+      console.error("Critical: Failed to sync ecosystem vitality matrix", err);
     } finally {
       setLoading(false);
     }

@@ -167,8 +167,8 @@ async def test_action_trigger(background_tasks: BackgroundTasks):
     if not supabase: return {"error": "Supabase not connected"}
     
     test_task = {
-        "project_name": "SANDBOX_TEST",
-        "error_description": "CRITICAL: Connection Timeout in Nexus_Gateway. (Triggering RETRY_STRATEGY)",
+        "project_name": "AUDITACAR",
+        "error_description": "CRITICAL: API Gateway Authentication Timeout in AuditaCar_Compute. (Simulating API_RECONNECT)",
         "status": "pending"
     }
     

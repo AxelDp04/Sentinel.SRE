@@ -12,12 +12,12 @@ SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
 def trigger_sacrifice():
     print("\n🎬 [DEMO] Disparando Trigger de Sacrificio directo a Supabase...")
     
-    # Payload exacto solicitado por Axel para la demo de impacto
+    # Payload para la demo de AUDITACAR
     error_data = {
-        "project_name": "DEMO_LIVE_SACRIFICE",
-        "error_description": "CRITICAL ERROR: PostgreSQL Connection Pool exhausted. Socket timeout after 10000ms. High latency detected in auth-service. (Triggering RETRY_STRATEGY)",
+        "project_name": "AUDITACAR",
+        "error_description": "CRITICAL: API Gateway Authentication Timeout in AuditaCar_Compute. (Simulating API_RECONNECT)",
         "status": "pending",
-        "resolution_steps": ["Sentinel: Sistema colapsado. Delegando control total a Nexus."]
+        "resolution_steps": ["Sentinel: Sistema AUDITACAR colapsado. Delegando control a Nexus."]
     }
 
     url = f"{SUPABASE_URL}/rest/v1/nexus_tasks"
