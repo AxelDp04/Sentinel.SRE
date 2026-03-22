@@ -14,7 +14,7 @@ if USE_GEMINI:
     llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash")
 else:
     from langchain_groq import ChatGroq
-    llm = ChatGroq(model="llama3-70b-8192")
+    llm = ChatGroq(model="llama-3.3-70b-specdec")
 
 class NexusState(TypedDict):
     task_id: str
