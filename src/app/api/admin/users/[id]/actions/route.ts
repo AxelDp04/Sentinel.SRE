@@ -21,11 +21,16 @@ export async function POST(
     // Telemetry: [AUTH_ADMIN_TEST]
     const logMsg = `[AUTH_ADMIN_TEST] ${action.toUpperCase()} on UID: ${userId} (${projectId.toUpperCase()})...`;
     
+    // Strip project prefix from the ID before passing to Supabase (e.g. 'arqovex-1234' -> '1234')
+    const cleanUserId = userId.startsWith(`${projectId}-`) 
+      ? userId.substring(projectId.length + 1) 
+      : userId;
+
     if (action === "logout") {
       // SOVEREIGN LOGOUT: Using the RPC tunnel granted by the user
       // This bypasses the schema 'auth' limitation by running with SECURITY DEFINER
       const { error } = await supabaseAdmin.rpc('force_logout_user', { 
-        target_user_id: userId 
+        target_user_id: cleanUserId 
       });
 
       const success = !error;
@@ -41,7 +46,7 @@ export async function POST(
     if (action === "reset-password") {
       const { data, error } = await supabaseAdmin.auth.admin.generateLink({
         type: "recovery",
-        uuid: userId,
+        uuid: cleanUserId,
       });
       const result = error ? `Error: ${error.message}` : "SUCCESS";
       
