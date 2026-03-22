@@ -33,13 +33,18 @@ class NexusState(TypedDict):
     security_approved: bool
     action_executed: str
     was_successful: bool
+    retry_count: int
+    start_time: float
+    end_time: float
     final_output: Optional[dict]
 
 def sre_agent(state: NexusState):
+    import time
+    if not state.get("start_time"):
+        state["start_time"] = time.time()
+        state["retry_count"] = 0
+        
     print(f"\n[{state['task_id']}] [SRE Agent Analyzing] Evaluando logs de error...")
-    
-    # In a real environment, we would use pgvector to retrieve past incidents here
-    # For now, we simulate the SRE analysis
     
     prompt = f"""
     Eres un SRE Senior diagnosticando un error en el proyecto '{state['project_name']}'.
@@ -47,11 +52,11 @@ def sre_agent(state: NexusState):
     
     Pasos de resolución previos / Feedback de seguridad: {state['security_feedback'] if state.get('security_feedback') else 'Ninguno'}
     
-    Genera una propuesta de solución técnica en formato texto plano, sin Markdown extraño, que sea clara y directa.
+    Genera una propuesta de solución técnica MUY BREVE (máximo 150 caracteres) enfocada en la causa raíz.
     """
     
     messages = [
-        SystemMessage(content="Eres un Site Reliability Engineer Senior obsesionado con el uptime."),
+        SystemMessage(content="Eres un Site Reliability Engineer Senior. Resuélvelo rápido y breve. Sin explicaciones innecesarias."),
         HumanMessage(content=prompt)
     ]
     
@@ -86,13 +91,6 @@ def security_agent(state: NexusState):
         state["security_approved"] = True
         state["security_feedback"] = None
         state["resolution_steps"].append("Security Agent: Aprobó la solución técnica.")
-        
-        # Prepare final JSON output
-        state["final_output"] = {
-            "solution": state["proposed_solution"],
-            "security_status": "Approved",
-            "message": "Solución verificada por IA y lista para aplicarse."
-        }
     else:
         state["security_approved"] = False
         state["security_feedback"] = result
@@ -102,6 +100,7 @@ def security_agent(state: NexusState):
 
 def action_node(state: NexusState):
     print(f"\n[{state['task_id']}] [Nexus Arms] Ejecutando Action Engine...")
+    import time
     
     error_desc = state["error_description"].lower()
     
@@ -110,12 +109,12 @@ def action_node(state: NexusState):
         state["action_executed"] = "RETRY_STRATEGY"
         state["resolution_steps"].append("Action Engine: Detectado fallo transitorio. Iniciando RETRY_STRATEGY.")
         
-        # Simulación de reintento con Backoff (en un caso real llamaríamos a una API)
-        import time
+        # Simulación de reintento con Backoff
         max_retries = 2
         success = False
         
         for i in range(max_retries):
+            state["retry_count"] += 1
             wait_time = (i + 1) * 2 # Backoff simple: 2s, 4s
             state["resolution_steps"].append(f"Retry Node: Intento {i+1} en curso (Esperando {wait_time}s)...")
             time.sleep(wait_time)
@@ -127,21 +126,27 @@ def action_node(state: NexusState):
         
         state["was_successful"] = success
         if success:
-            state["resolution_steps"].append("Retry Node: Reintento EXITOSO. Sistema restablecido.")
+            state["resolution_steps"].append("Retry Node: Reintento EXITOSO.")
         else:
-            state["resolution_steps"].append("Retry Node: Reintento FALLIDO tras varios intentos.")
+            state["resolution_steps"].append("Retry Node: Reintento FALLIDO.")
     else:
-        state["action_executed"] = "NONE (Manual required)"
+        state["action_executed"] = "MANUAL_INTERVENTION_REQUIRED"
         state["was_successful"] = False
-        state["resolution_steps"].append("Action Engine: Error complejo detectado. No se disparó mitigación automática.")
+        state["resolution_steps"].append("Action Engine: Error complejo detectado. Mitigación automática abortada.")
 
-    # Update final output with real action result
+    # Cierre de métrica de tiempo
+    state["end_time"] = time.time()
+    recovery_time = round(state["end_time"] - state["start_time"], 2)
+
+    # Update final output with real action result and Metrics
     state["final_output"] = {
         "solution": state["proposed_solution"],
-        "security_status": "Approved",
+        "security_status": "Approved" if state["security_approved"] else "Rejected",
         "action_executed": state["action_executed"],
         "was_successful": state["was_successful"],
-        "message": "Mitigación automática procesada por Nexus Arms." if state["was_successful"] else "Intervención humana requerida."
+        "retry_count": state["retry_count"],
+        "recovery_time": recovery_time,
+        "message": "Sentinel Ops Pro: Mitigación procesada."
     }
     
     return state

@@ -30,28 +30,44 @@ export async function POST(req: Request) {
     let finalReport = "";
 
     if (isNexusReport && incidentData) {
-      // PROCESAMIENTO PROACTIVO NEXUS (FORMATO COMPACTO - AXEL PEREZ)
-      const { project_name, error_description, solution, was_successful } = incidentData;
-      const timestamp = new Date().toLocaleString("es-DO", { timeZone: "America/Santo_Domingo" });
+      // PROCESAMIENTO PROACTIVO NEXUS (SENTINEL OPS PRO - AXEL PEREZ)
+      const { 
+        project_name, 
+        error_description, 
+        solution, 
+        was_successful, 
+        retry_count = 0, 
+        recovery_time = 0.0 
+      } = incidentData;
       
-      // Truncar para evitar el límite de 1600 de Twilio (objetivo < 1000)
-      const maxLen = 400; // 400 para error + 400 para solución + fijos ≈ 1000
-      const cleanError = error_description.length > maxLen ? error_description.substring(0, maxLen) + "..." : error_description;
-      const cleanSolution = solution.length > maxLen ? solution.substring(0, maxLen) + "..." : solution;
+      const timestamp = new Date().toLocaleString("es-DO", { 
+        timeZone: "America/Santo_DOMINGO",
+        hour12: true 
+      });
 
-      const statusTag = was_successful ? "✅ SISTEMA RESTABLECIDO" : "❌ ACCIÓN FALLIDA";
-      const statusDetail = was_successful 
-        ? "Bajo supervisión de Nexus." 
-        : "Intervención humana requerida URGENTE.";
+      // Extraer tipo de error (primeras palabras)
+      const errorType = error_description.split(":")[0]?.substring(0, 40) || "Anomalía de Sistema";
+      
+      // Diagnóstico corto (SRE Solution)
+      const shortAiDiagnosis = solution.length > 150 ? solution.substring(0, 150) + "..." : solution;
 
-      finalReport = `🛡️ SENTINEL OPS - INFORME TÉCNICO\n` +
-                    `Hola Ing. Axel Perez, un placer.\n\n` +
-                    `Alert: Anomalía en ${project_name}.\n` +
-                    `📝 Error: ${cleanError}\n` +
-                    `💡 Acción: ${cleanSolution}\n` +
-                    `⏰ Cierre: ${timestamp}\n\n` +
-                    `Status: ${statusTag}\n` +
-                    `${statusDetail}`;
+      const statusMsg = was_successful ? "SISTEMA RESTABLECIDO" : "ACCIÓN FALLIDA: Intervención requerida";
+      const statusIcon = was_successful ? "✅" : "❌";
+
+      finalReport = `Hola, Ing. Axel Perez\n` +
+                    `⸻\n` +
+                    `🛡️ SENTINEL OPS - INCIDENT REPORT\n\n` +
+                    `🚨 Incidente Detectado: ${errorType}\n` +
+                    `📍 Servicio: ${project_name}\n` +
+                    `🧠 Diagnóstico: ${shortAiDiagnosis}\n\n` +
+                    `🔧 Acción Ejecutada:\n\n` +
+                    `${incidentData.action_executed || 'RETRY_STRATEGY'} (${retry_count} intentos)\n\n` +
+                    `📊 Resultado:\n\n` +
+                    `${statusMsg} ${statusIcon}\n\n` +
+                    `Tiempo de recuperación: ${recovery_time} segundos\n\n` +
+                    `⏰ ${timestamp}\n` +
+                    `📡 Sistema bajo monitoreo activo.\n` +
+                    `⸻`;
     } else {
       // 1. Fetch incidents from the last 24 Hours (Direct REST call to bypass PGRST205 schema cache bug)
       const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();

@@ -65,7 +65,9 @@ async def poll_supabase():
                         project_name=project_name,
                         error_description=error_desc,
                         solution=final_state["final_output"].get("solution", "Ver panel para detalles."),
-                        was_successful=final_state.get("was_successful", True)
+                        was_successful=final_state.get("was_successful", True),
+                        retry_count=final_state["final_output"].get("retry_count", 0),
+                        recovery_time=final_state["final_output"].get("recovery_time", 0.0)
                     )
             
         except Exception as e:
