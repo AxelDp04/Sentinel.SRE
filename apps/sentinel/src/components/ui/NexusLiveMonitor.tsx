@@ -17,6 +17,9 @@ export function NexusLiveMonitor() {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // DIAGNÓSTICO DE CONEXIÓN (AXEL)
+    console.log("[NEXUS] Cliente conectado:", !!supabase);
+
     // 1. Fetch initial active/recent tasks
     const fetchTasks = async () => {
       const { data } = await supabase
