@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { 
   Users, 
   Activity, 
@@ -8,20 +8,57 @@ import {
   Globe,
   ArrowUpRight
 } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 interface DashboardStatsProps {
   users: any[];
 }
 
 export const DashboardStats = ({ users }: DashboardStatsProps) => {
+  const [incidentCount, setIncidentCount] = useState(0);
   const activeUsers = users.length;
   const avgLatency = "24ms";
   const uptime = "99.98%";
+
+  const fetchIncidentCount = useCallback(async () => {
+    try {
+      const { count, error } = await supabase
+        .from("nexus_tasks")
+        .select("*", { count: "exact", head: true });
+      
+      if (!error) {
+        setIncidentCount(count || 0);
+      }
+    } catch (err) {
+      console.error("DashboardStats: Failed to fetch incident count", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchIncidentCount();
+
+    // Suscripción Realtime solicitada por Axel Perez
+    const channel = supabase
+      .channel("nexus_tasks_counter_realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "nexus_tasks" },
+        () => {
+          console.log("[DASHBOARD] Syncing Incident Counter...");
+          fetchIncidentCount();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchIncidentCount]);
   
   const stats = [
     { 
       label: "Incidentes Totales", 
-      value: activeUsers, 
+      value: incidentCount, 
       sub: "Bajo Supervisión", 
       icon: Users,
       color: "text-blue-400",
