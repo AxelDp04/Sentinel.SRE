@@ -7,6 +7,9 @@ import { PROJECTS } from "@/constants/projects";
 
 export async function POST(req: Request) {
   try {
+    const rawBody = await req.clone().text();
+    console.log("[DEBUG API] Incoming WhatsApp Report Request:", rawBody);
+    
     // Authenticate the request. 
     // It can be triggered by the Sentinel Dashboard (Admin Key) 
     // or by a Vercel Cron Job (using a CRON_SECRET).

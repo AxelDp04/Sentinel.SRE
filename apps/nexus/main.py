@@ -60,6 +60,9 @@ async def poll_supabase():
                         sentinel_url = os.getenv("SENTINEL_API_URL") or os.getenv("NEXT_PUBLIC_SITE_URL") or "https://sentinel-dashboard.vercel.app"
                         admin_key = os.getenv("ADMIN_KEY") or "AxelDp04"
                         
+                        target_url = f"{sentinel_url.rstrip('/')}/api/admin/whatsapp/report"
+                        print(f"[{task_id}] [Vigilante Debug] Attempting report to: {target_url}")
+                        
                         payload = {
                             "isNexusReport": True,
                             "incidentData": {
