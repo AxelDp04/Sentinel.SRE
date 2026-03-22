@@ -4,14 +4,8 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
 import { DashboardStats } from "@/components/ui/DashboardStats";
-import { HealthRadar } from "@/components/ui/HealthRadar";
-import { ServiceStatus } from "@/components/ui/ServiceStatus";
+import { EcosystemStatusGrid } from "@/components/ui/EcosystemStatusGrid";
 import { ActionCenter } from "@/components/ui/ActionCenter";
-import { SafeModeLock } from "@/components/ui/SafeModeLock";
-import { SheriffPanel } from "@/components/ui/SheriffPanel";
-import { EcosystemTable } from "@/components/ui/EcosystemTable";
-import { TrafficChart } from "@/components/ui/TrafficChart";
-import { TermDebug } from "@/components/ui/TermDebug";
 import { Gatekeeper } from "@/components/ui/Gatekeeper";
 import { getStoredAdminKey, isValidAdminKey } from "@/lib/auth";
 import { PROJECTS } from "@/constants/projects";
@@ -94,81 +88,68 @@ export default function Home() {
         <div className="flex-1 flex flex-col overflow-hidden">
           <Header />
 
-          <div className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-1000">
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-1000 max-w-7xl mx-auto w-full">
             
-            {/* 1. Tactical Intelligence Layer (Top Stats) */}
+            {/* CATEGORY 1: VIGILANCIA DE SEGURIDAD (Métricas) */}
             <section className="space-y-6">
                <div className="flex items-center gap-4">
-                  <span className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-600">Infrastructure_Vitality</span>
+                  <span className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-600">01_Vigilancia_de_Seguridad</span>
                   <div className="h-px flex-1 bg-white/5"></div>
                </div>
                <DashboardStats users={users} />
             </section>
 
-            {/* 2. Command Architecture (Main Bento Grid) */}
-            <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
               
-              {/* Left Column: Intelligence & Controls (4/12) */}
-              <div className="xl:col-span-4 space-y-8">
-                 <div className="flex flex-col gap-8">
-                    <HealthRadar />
-                    <ActionCenter 
+              {/* CATEGORY 2: ESTADO DEL ECOSISTEMA (Izquierda - 5/12) */}
+              <section className="lg:col-span-5 space-y-6">
+                <div className="flex items-center gap-4">
+                  <span className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-600">02_Estado_del_Ecosistema</span>
+                  <div className="h-px flex-1 bg-white/5"></div>
+                </div>
+                <div className="space-y-4">
+                   <div className="flex items-center justify-between px-2">
+                      <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-500/60 italic">Node_Health_Matrix</h2>
+                      <div className="flex items-center gap-2 text-[8px] font-mono text-slate-700">
+                         <div className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse" /> NODES_SYNC_ACTIVE
+                      </div>
+                   </div>
+                   <EcosystemStatusGrid healthData={healthData} />
+                </div>
+                
+                {/* Advanced Controls (Minimized) */}
+                <div className="pt-8 opacity-20 hover:opacity-100 transition-opacity">
+                   <ActionCenter 
                       safeMode={isSafeMode} 
                       setSafeMode={setIsSafeMode} 
                       onForceRefresh={() => adminKey && fetchEcosystemData(adminKey)} 
                     />
-                    <SafeModeLock isLocked={isSafeMode} />
-                 </div>
-              </div>
+                </div>
+              </section>
 
-              {/* Right Column: Node Monitoring & Traffic (8/12) */}
-              <div className="xl:col-span-8 space-y-8">
-                 <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                       <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-sentinel/60 italic">Node_Security_Cluster</h2>
-                       <div className="flex items-center gap-2 text-[8px] font-mono text-slate-700">
-                          <div className="w-1 h-1 bg-sentinel rounded-full animate-pulse" /> SRE_REALTIME_STREAM_ACTIVE
-                       </div>
-                    </div>
-                    <ServiceStatus adminKey={adminKey} />
-                 </div>
-                 
-                 <div className="space-y-4">
-                    <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-600">Ecosystem_Traffic_Analysis</h2>
-                    <TrafficChart data={users} />
-                 </div>
-              </div>
+              {/* CATEGORY 3: REGISTRO DE INCIDENTES (Derecha - 7/12) */}
+              <section className="lg:col-span-7 space-y-6">
+                <div className="flex items-center gap-4">
+                  <span className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-600">03_Registro_de_Incidentes</span>
+                  <div className="h-px flex-1 bg-white/5"></div>
+                </div>
+                <NexusLiveMonitor adminKey={adminKey} />
+              </section>
+
             </div>
 
-            {/* 3. Sovereignty Layer (Ecosystem Data) */}
-            <section className="space-y-8 border-t border-white/5 pt-12">
-              <div className="flex items-center justify-center gap-8 text-center pb-4">
-                 <div className="h-px w-24 bg-gradient-to-r from-transparent to-white/10"></div>
-                 <h2 className="text-[11px] font-black uppercase tracking-[1em] text-slate-500 italic">Ecosystem_Mastery_Matrix</h2>
-                 <div className="h-px w-24 bg-gradient-to-l from-transparent to-white/10"></div>
-              </div>
-              
-              <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
-                <div className="xl:col-span-8">
-                   <EcosystemTable healthData={healthData} users={users} />
-                </div>
-                
-                <div className="xl:col-span-4">
-                   <NexusLiveMonitor adminKey={adminKey} />
-                </div>
-              </div>
-              
-              {!isSafeMode && (
-                  <div className="animate-in slide-in-from-bottom-10 duration-700">
-                    <SheriffPanel adminKey={adminKey} />
-                  </div>
-                )}
+            {/* Footer / Debug (Optional visibility) */}
+            <section className="pt-12 border-t border-white/5 flex flex-col items-center gap-4 opacity-30">
+               <p className="text-[10px] font-mono uppercase tracking-widest text-slate-600">
+                  Sentinel SRE Ecosystem v3.0 - Managed by Nexus Engine
+               </p>
+               <div className="flex gap-8 text-[9px] font-mono text-slate-700 uppercase">
+                  <span>LATENCY: SYNCED</span>
+                  <span>ENCRYPTION: AES-256</span>
+                  <span>MODE: MISSION_CONTROL</span>
+               </div>
             </section>
 
-            {/* 4. Debug Console */}
-            <section className="pb-12 opacity-40 hover:opacity-100 transition-opacity">
-               <TermDebug />
-            </section>
           </div>
         </div>
       </div>

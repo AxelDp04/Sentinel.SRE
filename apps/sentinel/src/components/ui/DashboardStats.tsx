@@ -20,33 +20,33 @@ export const DashboardStats = ({ users }: DashboardStatsProps) => {
   
   const stats = [
     { 
-      label: "Node Sovereignty", 
+      label: "Incidentes Totales", 
       value: activeUsers, 
-      sub: "Active Users", 
+      sub: "Bajo Supervisión", 
       icon: Users,
-      color: "text-sentinel",
-      bg: "bg-sentinel/10"
-    },
-    { 
-      label: "System Latency", 
-      value: avgLatency, 
-      sub: "Avg Ecosystem Ping", 
-      icon: Activity,
       color: "text-blue-400",
       bg: "bg-blue-400/10"
     },
     { 
-      label: "Service Uptime", 
-      value: uptime, 
-      sub: "SLA Matrix (24h)", 
-      icon: Globe,
-      color: "text-orange-400",
-      bg: "bg-orange-400/10"
+      label: "Latencia Ecosistema", 
+      value: avgLatency, 
+      sub: "Ping Promedio", 
+      icon: Activity,
+      color: "text-amber-400",
+      bg: "bg-amber-400/10"
     },
     { 
-      label: "AI Neural State", 
-      value: "SYNCHRONIZED", 
-      sub: "Gemini 1.5-Flash", 
+      label: "SLA Disponibilidad", 
+      value: uptime, 
+      sub: "Rendimiento 24h", 
+      icon: Globe,
+      color: "text-emerald-400",
+      bg: "bg-emerald-400/10"
+    },
+    { 
+      label: "Blindaje Nexus", 
+      value: "ACTIVO", 
+      sub: "Escudo IA Activo", 
       icon: Cpu,
       color: "text-purple-400",
       bg: "bg-purple-400/10"

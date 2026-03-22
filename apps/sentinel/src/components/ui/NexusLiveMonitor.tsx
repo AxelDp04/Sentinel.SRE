@@ -80,57 +80,78 @@ export function NexusLiveMonitor({ adminKey }: { adminKey: string | null }) {
     return <Clock className="w-3 h-3 text-slate-500" />;
   };
 
+  const [showLogs, setShowLogs] = useState<Record<string, boolean>>({});
+
+  const toggleLogs = (id: string) => {
+    setShowLogs(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
   if (tasks.length === 0) {
     return (
-      <div className="bg-black/40 border border-white/10 rounded-xl p-6 text-center text-slate-500 w-full h-full min-h-[400px] flex flex-col items-center justify-center">
-        <Bot className="w-8 h-8 opacity-20 mb-2" />
-        <p className="text-xs uppercase tracking-widest font-mono">Nexus Engine Idling</p>
+      <div className="card-premium p-12 text-center text-slate-500 w-full h-full min-h-[400px] flex flex-col items-center justify-center bg-slate-900/20 backdrop-blur-xl">
+        <Bot className="w-12 h-12 opacity-10 mb-6" />
+        <p className="text-[10px] uppercase tracking-[0.3em] font-black text-slate-600">Nexus Engine: Vigilancia Pasiva</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-black/40 border border-blue-500/20 rounded-xl overflow-hidden shadow-[0_0_30px_rgba(59,130,246,0.1)]">
-      <div className="bg-blue-500/10 border-b border-blue-500/20 p-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Bot className="w-4 h-4 text-blue-400" />
-          <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-400">Nexus Live Monitor</h3>
+    <div className="card-premium overflow-hidden bg-slate-900/40 backdrop-blur-2xl border-white/5">
+      <div className="p-6 border-b border-white/5 flex items-center justify-between bg-white/5">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-blue-500/10 rounded-lg">
+            <Bot className="w-5 h-5 text-blue-400" />
+          </div>
+          <div>
+            <h3 className="text-xs font-black uppercase tracking-[0.2em] text-white italic">Registro de Incidentes</h3>
+            <p className="text-[8px] text-slate-500 uppercase tracking-widest font-mono">SRE_TELEMETRY_STREAM</p>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-          <span className="text-[8px] font-mono text-blue-400">ENGINE_SYNC</span>
+        <div className="flex items-center gap-3">
+          <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse shadow-[0_0_10px_rgba(59,130,246,0.5)]" />
+          <span className="text-[10px] font-black text-slate-400 tracking-tighter uppercase font-mono">Synced</span>
         </div>
       </div>
 
       <div 
         ref={scrollRef}
-        className="p-4 space-y-4 max-h-[400px] overflow-y-auto custom-scrollbar"
+        className="divide-y divide-white/5 max-h-[600px] overflow-y-auto custom-scrollbar"
       >
         {tasks.map((task) => (
-          <div key={task.id} className="border border-white/5 bg-white/5 rounded-lg p-4 space-y-3">
+          <div key={task.id} className="p-6 space-y-4 hover:bg-white/5 transition-all">
             {/* Header */}
             <div className="flex items-start justify-between">
-              <div>
-                <div className="flex items-center gap-2">
-                  {getStatusIcon(task.status)}
-                  <span className="text-xs font-bold text-white/90">{task.project_name}</span>
+              <div className="flex gap-4">
+                <div className={`mt-1 p-2 rounded-lg ${task.status === 'resolved' ? 'bg-emerald-500/10' : 'bg-amber-500/10'}`}>
+                   {getStatusIcon(task.status)}
                 </div>
-                <p className="text-[10px] text-red-400/80 font-mono mt-1 w-64 truncate">
-                  {task.error_description}
-                </p>
+                <div>
+                  <div className="flex items-center gap-3 mb-1">
+                    <span className="text-sm font-black text-white tracking-tight">{task.project_name}</span>
+                    <span className={`text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-[0.1em] border ${task.status === 'resolved' ? 'border-emerald-500/20 text-emerald-400 bg-emerald-500/5' : 'border-amber-500/20 text-amber-400 bg-amber-500/5'}`}>
+                      {task.status}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-400 leading-relaxed font-mono italic max-w-lg">
+                    {task.error_description}
+                  </p>
+                </div>
               </div>
-              <span className="text-[9px] px-2 py-0.5 rounded-full border border-white/10 text-white/50 uppercase">
-                {task.status}
-              </span>
+              <button 
+                onClick={() => toggleLogs(task.id)}
+                className="text-[9px] font-black uppercase tracking-widest text-slate-600 hover:text-blue-400 transition-colors p-2"
+              >
+                {showLogs[task.id] ? '[+] Hide_Telemetry' : '[-] View_Telemetry'}
+              </button>
             </div>
 
-            {/* AI Thought Logs */}
-            {task.resolution_steps && task.resolution_steps.length > 0 && (
-              <div className="pt-2 border-t border-white/5 space-y-1">
+            {/* AI Thought Logs (Toggleable) */}
+            {showLogs[task.id] && task.resolution_steps && task.resolution_steps.length > 0 && (
+              <div className="ml-14 p-4 bg-black/40 rounded-xl border border-white/5 space-y-2 animate-in slide-in-from-top-2 duration-300">
                 {task.resolution_steps.map((step, idx) => (
-                   <div key={idx} className="flex items-start gap-2 text-[10px] text-slate-400 font-mono animate-in slide-in-from-left-2 duration-300">
-                     {getStepIcon(step)}
-                     <span className="flex-1">{step}</span>
+                   <div key={idx} className="flex items-start gap-3 text-[10px] text-slate-500 font-mono tracking-tight leading-relaxed">
+                     <div className="mt-1">{getStepIcon(step)}</div>
+                     <span className="flex-1 border-b border-white/5 pb-1">{step}</span>
                    </div>
                 ))}
               </div>
@@ -138,12 +159,15 @@ export function NexusLiveMonitor({ adminKey }: { adminKey: string | null }) {
 
             {/* Final AI Output */}
             {task.status === "resolved" && task.ai_output && (
-               <div className="mt-4 p-3 bg-green-500/10 border border-green-500/20 rounded text-xs text-green-400 font-mono animate-in fade-in zoom-in duration-500">
-                  <div className="flex items-center gap-2 mb-2 pb-2 border-b border-green-500/20">
-                    <CheckCircle className="w-3 h-3" />
-                    <strong>Auto-Resolution Veredict</strong>
+               <div className="ml-14 p-5 bg-emerald-500/5 border border-emerald-500/10 rounded-xl text-xs text-emerald-100/80 font-mono animate-in zoom-in-95 duration-500 relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-30 transition-opacity">
+                    <CheckCircle className="w-12 h-12" />
                   </div>
-                  <pre className="whitespace-pre-wrap font-sans text-[11px] leading-relaxed">
+                  <div className="flex items-center gap-2 mb-3 pb-3 border-b border-emerald-500/10">
+                    <CheckCircle className="w-4 h-4 text-emerald-400" />
+                    <strong className="text-[9px] uppercase tracking-[0.3em] font-black text-emerald-400">Acción de Mitigación Nexus</strong>
+                  </div>
+                  <pre className="whitespace-pre-wrap font-sans text-[12px] leading-relaxed italic">
                     {task.ai_output.solution}
                   </pre>
                </div>
