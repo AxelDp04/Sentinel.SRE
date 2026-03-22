@@ -57,10 +57,11 @@ export async function analyzeIncidentPatterns(incidents: any[], uptimePercentage
   }
 
   try {
+    const validIncidents = Array.isArray(incidents) ? incidents : [];
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-    const errorList = incidents.map(i => `[${new Date(i.created_at).toLocaleTimeString()}] ${i.service_name} - ${i.action_taken} - ${i.status}`).join("\n");
-    const summary = incidents.length === 0 
-      ? "Cero incidentes registrados en este periodo."
+    const errorList = validIncidents.map(i => `[${new Date(i?.created_at || Date.now()).toLocaleTimeString()}] ${i?.service_name || 'Desconocido'} - ${i?.action_taken || 'N/A'} - ${i?.status || 'UNKNOWN'}`).join("\n");
+    const summary = validIncidents.length === 0 
+      ? "Cero incidentes registrados en este periodo. Reporte de Ecosistema Limpio."
       : `Incidentes registrados:\n${errorList}`;
 
     const prompt = `

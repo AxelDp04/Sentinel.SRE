@@ -47,11 +47,12 @@ export async function POST(req: Request) {
       throw new Error(`DB Telemetry Fetch Failed (REST Bypass): ${dbRes.status} ${errTxt}`);
     }
 
-    const incidents = await dbRes.json();
+    const rawData = await dbRes.json();
+    const incidents = Array.isArray(rawData) ? rawData : (rawData?.error ? [] : [rawData]);
 
     // 2. Calculate Uptime Metric
     // 24 hours = 1440 minutes. Assume each incident = 3 mins of downtime for estimation
-    const estimatedDowntimeMinutes = (incidents || []).length * 3;
+    const estimatedDowntimeMinutes = incidents.length * 3;
     const uptimePercentage = Math.max(0, ((1440 - estimatedDowntimeMinutes) / 1440) * 100).toFixed(2);
 
     // 3. Gemini "Root Guardian" Analysis
