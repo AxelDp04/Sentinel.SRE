@@ -7,3 +7,4 @@ langchain-groq
 pydantic
 python-dotenv
 asyncio
+requests
