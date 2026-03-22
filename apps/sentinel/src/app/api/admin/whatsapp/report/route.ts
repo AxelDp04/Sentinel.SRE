@@ -30,16 +30,22 @@ export async function POST(req: Request) {
     let finalReport = "";
 
     if (isNexusReport && incidentData) {
-      // PROCESAMIENTO PROACTIVO NEXUS (FORMATO AXEL PEREZ)
+      // PROCESAMIENTO PROACTIVO NEXUS (FORMATO COMPACTO - AXEL PEREZ)
       const { project_name, error_description, solution } = incidentData;
       const timestamp = new Date().toLocaleString("es-DO", { timeZone: "America/Santo_Domingo" });
       
-      finalReport = `🛡️ SENTINEL OPS - INFORME TÉCNICO. Hola Ing. Axel Perez, un placer.\n\n` +
-                    `Detectamos una anomalía en ${project_name}.\n\n` +
-                    `📝 Detalle del Error: ${error_description}\n` +
-                    `💡 Resolución Nexus: ${solution}\n` +
-                    `⏰ Hora de cierre: ${timestamp}\n\n` +
-                    `El sistema se encuentra estable nuevamente bajo supervisión de Nexus.`;
+      // Truncar para evitar el límite de 1600 de Twilio (objetivo < 1000)
+      const maxLen = 400; // 400 para error + 400 para solución + fijos ≈ 1000
+      const cleanError = error_description.length > maxLen ? error_description.substring(0, maxLen) + "..." : error_description;
+      const cleanSolution = solution.length > maxLen ? solution.substring(0, maxLen) + "..." : solution;
+
+      finalReport = `🛡️ SENTINEL OPS - INFORME TÉCNICO\n` +
+                    `Hola Ing. Axel Perez, un placer.\n\n` +
+                    `Alert: Anomalía en ${project_name}.\n` +
+                    `📝 Error: ${cleanError}\n` +
+                    `💡 Solución: ${cleanSolution}\n` +
+                    `⏰ Cierre: ${timestamp}\n\n` +
+                    `Status: ESTABLE bajo supervisión de Nexus.`;
     } else {
       // 1. Fetch incidents from the last 24 Hours (Direct REST call to bypass PGRST205 schema cache bug)
       const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
@@ -74,6 +80,8 @@ export async function POST(req: Request) {
     // Prioridad: 1. Body targetPhone, 2. Env TWILIO_OWNER_NUMBER, 3. Env TWILIO_WHATSAPP_NUMBER
     const destination = targetPhone || process.env.TWILIO_OWNER_NUMBER || process.env.TWILIO_WHATSAPP_NUMBER;
     
+    console.log(`[TRIGGER API] Enviando reporte de ${finalReport.length} caracteres a ${destination}`);
+
     if (!destination) {
        return NextResponse.json({ error: "No target phone number configured for Reporting." }, { status: 400 });
     }
