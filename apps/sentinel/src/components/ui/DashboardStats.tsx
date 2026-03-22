@@ -12,9 +12,10 @@ import { supabase } from "@/lib/supabase";
 
 interface DashboardStatsProps {
   users: any[];
+  adminKey?: string | null;
 }
 
-export const DashboardStats = ({ users }: DashboardStatsProps) => {
+export const DashboardStats = ({ users, adminKey }: DashboardStatsProps) => {
   const [incidentCount, setIncidentCount] = useState(0);
   const activeUsers = users.length;
   const avgLatency = "24ms";
@@ -22,17 +23,18 @@ export const DashboardStats = ({ users }: DashboardStatsProps) => {
 
   const fetchIncidentCount = useCallback(async () => {
     try {
-      const { count, error } = await supabase
-        .from("nexus_tasks")
-        .select("*", { count: "exact", head: true });
-      
-      if (!error) {
-        setIncidentCount(count || 0);
+      // Usar el API Proxy para evitar bloqueos de RLS (Igual que el monitor)
+      const res = await fetch("/api/admin/incidents", {
+        headers: { "X-Admin-Key": adminKey || "AxelDp04" }
+      });
+      const data = await res.json();
+      if (data.incidents) {
+        setIncidentCount(data.incidents.length);
       }
     } catch (err) {
       console.error("DashboardStats: Failed to fetch incident count", err);
     }
-  }, []);
+  }, [adminKey]);
 
   useEffect(() => {
     fetchIncidentCount();

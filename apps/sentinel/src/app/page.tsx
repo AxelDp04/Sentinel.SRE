@@ -14,6 +14,7 @@ import { PROJECTS } from "@/constants/projects";
 import { NexusLiveMonitor } from "@/components/ui/NexusLiveMonitor";
 import { SheriffPanel } from "@/components/ui/SheriffPanel";
 import { MobileNavBar } from "@/components/layout/MobileNavBar";
+import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
@@ -104,14 +105,16 @@ export default function Home() {
               <VitalityFlowMonitor />
             </div>
 
-            {/* CATEGORY 1: VIGILANCIA DE SEGURIDAD (Métricas) */}
-            <section className="space-y-8">
-               <div className="flex items-center gap-6">
-                  <span className="text-[11px] font-black uppercase tracking-[0.5em] text-slate-700">01_Security_Vigilance</span>
-                  <div className="h-px flex-1 bg-white/5"></div>
-               </div>
-               <DashboardStats users={users} />
-            </section>
+             {/* CATEGORY 1: VIGILANCIA DE SEGURIDAD (Métricas) */}
+             <section className="space-y-8">
+                <div className="flex items-center gap-6">
+                   <span className="text-[11px] font-black uppercase tracking-[0.5em] text-slate-700">01_Security_Vigilance</span>
+                   <div className="h-px flex-1 bg-white/5"></div>
+                </div>
+                <ErrorBoundary>
+                   <DashboardStats users={users} adminKey={adminKey} />
+                </ErrorBoundary>
+             </section>
 
             {/* CATEGORY 2: REGISTRO DE INCIDENTES (EL CORAZÓN - NEXUS) */}
             <section className="space-y-10 animate-in zoom-in-95 duration-1000">
