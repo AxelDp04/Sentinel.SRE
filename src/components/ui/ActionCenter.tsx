@@ -10,8 +10,10 @@ import {
   User, 
   CheckCircle2,
   AlertTriangle,
-  RotateCcw
+  RotateCcw,
+  MessageSquare
 } from "lucide-react";
+import { getStoredAdminKey } from "@/lib/auth";
 
 interface Activity {
   id: string;
@@ -57,7 +59,9 @@ export const ActionCenter = ({ onForceRefresh, safeMode, setSafeMode }: ActionCe
     // Simulate process
     await new Promise(resolve => setTimeout(resolve, 3000));
     
-    if (callback) callback();
+    if (callback) {
+      await callback();
+    }
     
     setLoadingAction(null);
     addActivity(`${name} completed successfully`, "success");
@@ -133,6 +137,24 @@ export const ActionCenter = ({ onForceRefresh, safeMode, setSafeMode }: ActionCe
             <span className="text-[10px] font-mono uppercase tracking-widest text-red-400/80 group-hover:text-red-500 font-bold leading-tight">Emergency<br/>Rollback</span>
           </button>
         </div>
+
+        <button 
+          disabled={loadingAction !== null}
+          onClick={() => handleAction("Generate WhatsApp Report", async () => {
+             const key = getStoredAdminKey();
+             const res = await fetch('/api/admin/whatsapp/report', { 
+               method: 'POST', 
+               headers: { 'X-Admin-Key': key || '' } 
+             });
+             const data = await res.json();
+             if(data.success) alert(data.message);
+             else alert("Error: " + data.error);
+          })}
+          className="mt-6 w-full flex items-center justify-center gap-3 p-4 glass rounded-2xl bg-green-500/10 hover:bg-green-500/20 transition-all border border-green-500/30 hover:border-green-500/60 shadow-xl shadow-green-500/5 group"
+        >
+           <MessageSquare className="w-5 h-5 text-green-400 group-hover:animate-pulse" />
+           <span className="text-[10px] font-mono uppercase tracking-widest text-green-400 font-bold">Transmit Root Guardian Briefing</span>
+        </button>
       </div>
 
       {/* Audit Logs */}

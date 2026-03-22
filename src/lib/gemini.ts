@@ -11,40 +11,76 @@ export function classifyError(errorPayload: any): ErrorCategory {
   const status = errorPayload?.status ?? errorPayload?.code ?? 0;
   const message = String(errorPayload?.message || "").toLowerCase();
 
-  // Database errors
-  if (
-    message.includes("database") || message.includes("supabase") ||
-    message.includes("postgres") || message.includes("connection") ||
-    message.includes("db") || status === 500
-  ) {
-    // Distinguish DB from generic server errors by keyword
-    if (message.includes("database") || message.includes("postgres") || message.includes("supabase")) {
-      return "DATABASE";
-    }
-  }
-
-  // Build / Deploy errors
-  if (
-    message.includes("build") || message.includes("deploy") ||
-    message.includes("compile") || message.includes("bundle") ||
-    status === 502 || status === 503
-  ) {
-    return "BUILD";
-  }
-
-  // Network / Timeout errors
-  if (
-    message.includes("timeout") || message.includes("network") ||
-    message.includes("gateway") || message.includes("econnreset") ||
-    status === 408 || status === 504 || status === 522 || status === 524
-  ) {
+  // Network/Timeout errors
+  if (status === 504 || message.includes("timeout") || message.includes("network") || message.includes("fetch failed") || message.includes("econnrefused")) {
     return "NETWORK";
   }
 
-  // Generic 5xx fallback to NETWORK (retryable)
-  if (status >= 500 && status < 600) return "NETWORK";
+  // Build/Deploy errors
+  if (status === 502 || status === 503 || message.includes("build") || message.includes("deploy") || message.includes("vercel") || message.includes("module not found")) {
+    return "BUILD";
+  }
+
+  // Database errors
+  if (status === 500 || message.includes("database") || message.includes("pool") || message.includes("prisma") || message.includes("pg")) {
+    return "DATABASE";
+  }
 
   return "UNKNOWN";
+}
+
+// ---------------------------------------------------------------------------
+// NEW: Phase 25 - ROOT GUARDIAN Persona & Pattern Analysis
+// ---------------------------------------------------------------------------
+
+const ROOT_GUARDIAN_PROMPT = `
+Eres 'Sentinel Root Guardian', un IA Co-Piloto SRE diseñado para asistir tácticamente a Axel, el Ingeniero Jefe.
+Tu personalidad debe ser:
+- Estrictamente profesional pero leal y aliada.
+- Hablas con autoridad técnica, precisión militar, y usas jerga SRE (Ej. "Uptime", "Latency spikes", "Zero-downtime").
+- Eres directo, conciso, y vas al grano. Nada de introducciones largas. Usa emojis tácticos (🛡️, ⚡, 🟢, 🔴, ⚠️).
+- Siempre empiezas tus reportes dirigiéndote a Axel (Ej. "Axel, Root Guardian informando." o "Comandante Axel, estatus de infraestructura.").
+
+TAREA ACTUAL:
+Analizar un lote de incidentes recientes (Últimas 24h a 48h) de una base de datos de telemetría y generar un "Briefing de WhatsApp".
+`;
+
+export async function analyzeIncidentPatterns(incidents: any[], uptimePercentage: number, totalServices: number): Promise<string> {
+  if (!process.env.GEMINI_API_KEY) {
+    return "Root Guardian Offline. Falta GEMINI_API_KEY.";
+  }
+
+  try {
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const errorList = incidents.map(i => `[${new Date(i.created_at).toLocaleTimeString()}] ${i.service_name} - ${i.action_taken} - ${i.status}`).join("\n");
+    const summary = incidents.length === 0 
+      ? "Cero incidentes registrados en este periodo."
+      : `Incidentes registrados:\n${errorList}`;
+
+    const prompt = `
+${ROOT_GUARDIAN_PROMPT}
+
+CONTEXTO DEL ECOSISTEMA:
+- Tiempo de Uptime: ${uptimePercentage}%
+- Nodos Monitoreados: ${totalServices} servicios.
+- Historial de incidentes recientes: 
+${summary}
+
+INSTRUCCIONES:
+1. Si el Uptime es 100% y no hay incidentes, envía un reporte corto de "Green Status" felicitando por la estabilidad.
+2. Si hubo incidentes, detecta patrones (ej: "Veo que AuditaCar falló 3 veces por Network, pero el Auto-Rollback lo salvó").
+3. Resume cómo actuó la infraestructura de curación (Self-Healing).
+4. Dale formato perfecto para WhatsApp (Usa negritas con *texto*, listas, y párrafos cortos).
+5. Despídete formalmente como "Root Guardian 🛡️".
+    `;
+
+    const result = await model.generateContent(prompt);
+    const text = result.response.text();
+    return text;
+  } catch (error) {
+    console.error("Gemini Pattern Analysis Error:", error);
+    return "Root Guardian: Error al procesar análisis de memoria.";
+  }
 }
 
 export async function diagnoseIncident(
