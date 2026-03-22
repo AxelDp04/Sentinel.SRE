@@ -5,6 +5,7 @@ import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
 import { DashboardStats } from "@/components/ui/DashboardStats";
 import { EcosystemStatusGrid } from "@/components/ui/EcosystemStatusGrid";
+import { VitalityFlowMonitor } from "@/components/ui/VitalityFlowMonitor";
 import { ActionCenter } from "@/components/ui/ActionCenter";
 import { Gatekeeper } from "@/components/ui/Gatekeeper";
 import { getStoredAdminKey, isValidAdminKey } from "@/lib/auth";
@@ -90,6 +91,11 @@ export default function Home() {
 
           <div className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-24 animate-in fade-in slide-in-from-bottom-2 duration-1000 max-w-6xl mx-auto w-full">
             
+            {/* VITALITY FLOW MONITOR (ECG PULSE) */}
+            <div className="w-full">
+              <VitalityFlowMonitor />
+            </div>
+
             {/* CATEGORY 1: VIGILANCIA DE SEGURIDAD (Métricas) */}
             <section className="space-y-8">
                <div className="flex items-center gap-6">
