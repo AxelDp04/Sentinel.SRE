@@ -15,6 +15,7 @@ import { NexusLiveMonitor } from "@/components/ui/NexusLiveMonitor";
 import { SheriffPanel } from "@/components/ui/SheriffPanel";
 import { MobileNavBar } from "@/components/layout/MobileNavBar";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
+import { supabase } from "@/lib/supabase";
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
@@ -45,15 +46,24 @@ export default function Home() {
         .select("project_name, status")
         .in("status", ["pending", "analyzing"]);
 
-      const activeProjectNames = (activeTasks || []).map(t => t.project_name.toLowerCase());
+      const activeProjectNames = (activeTasks || []).map((t: any) => t.project_name.toLowerCase());
 
-      // 3. Sync Ecosystem Vitality Matrix
+      // 3. Fetch Real Project Vitality (Pings to Neon/Supabase)
+      const healthRes = await fetch("/api/admin/health", {
+        headers: { "X-Admin-Key": key }
+      });
+      const healthJson = await healthRes.json();
+      const realHealth = healthJson.health || {};
+
+      // 4. Sync Ecosystem Vitality Matrix
       const health: Record<string, any> = {};
       PROJECTS.forEach(p => {
-        const isOffline = activeProjectNames.includes(p.id.toLowerCase());
+        const isNexusBusy = activeProjectNames.includes(p.id.toLowerCase());
+        const real = realHealth[p.id.toLowerCase()] || { status: 'online', latency: 25 };
+        
         health[p.id] = {
-           status: isOffline ? 'offline' : 'online',
-           latency: isOffline ? 999 : (Math.floor(Math.random() * 40) + 10)
+           status: isNexusBusy ? 'offline' : real.status,
+           latency: isNexusBusy ? 999 : real.latency
         };
       });
       setHealthData(health);

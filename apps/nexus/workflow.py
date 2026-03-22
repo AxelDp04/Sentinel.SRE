@@ -105,19 +105,27 @@ def action_node(state: NexusState):
     error_desc = state["error_description"].lower()
     project = state.get("project_name", "").upper()
     
-    # Lógica Adaptativa por Proyecto (AuditaCar Transition)
+    # Lógica Adaptativa por Proyecto (Project Isolation Protocol)
+    neon_target = os.getenv("AUDITACAR_NEON_DATABASE_URL")
+    arqovex_target = os.getenv("ARQOVEX_SUPABASE_URL")
+    
     if project == "AUDITACAR":
+        state["resolution_steps"].append(f"Isolation: Nexus artillería apuntada a Neon ({neon_target[:15]}...)")
         if "api" in error_desc or "gateway" in error_desc:
             state["action_executed"] = "API_RECONNECT"
             state["resolution_steps"].append("Action Engine: Re-sincronizando API Gateway de AuditaCar...")
         elif "db" in error_desc or "database" in error_desc or "pool" in error_desc:
             state["action_executed"] = "DB_REBOOT_SIM"
-            state["resolution_steps"].append("Action Engine: Reiniciando instancia de base de datos AuditaCar...")
+            state["resolution_steps"].append("Action Engine: Reiniciando instancia de base de datos AuditaCar en Neon...")
         else:
             state["action_executed"] = "RETRY_STRATEGY"
             state["resolution_steps"].append("Action Engine: Iniciando RETRY_STRATEGY para AuditaCar.")
+    elif project == "ARQOVEX":
+        state["resolution_steps"].append("Isolation: Modo Centinela Silencioso activado para ARQOVEX.")
+        state["action_executed"] = "SILENT_MONITOR_SYNC"
+        state["resolution_steps"].append(f"Action Engine: Sincronizando telemetría de Supabase ({arqovex_target[:15]}...)")
     else:
-        # Default RETRY_STRATEGY (Punto 3 de Axel)
+        # Default RETRY_STRATEGY
         if "timeout" in error_desc or "network" in error_desc or "connection" in error_desc:
             state["action_executed"] = "RETRY_STRATEGY"
             state["resolution_steps"].append("Action Engine: Detectado fallo transitorio. Iniciando RETRY_STRATEGY.")

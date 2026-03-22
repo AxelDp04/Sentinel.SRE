@@ -1,66 +1,65 @@
 import { NextResponse } from "next/server";
 import { isValidAdminKey } from "@/lib/auth";
-import { PROJECTS } from "@/constants/projects";
 
-const TIMEOUT_MS = 6000;
+export const dynamic = 'force-dynamic';
 
-/**
- * Real HTTP Health Check for all ecosystem services.
- * Pings each service URL (HEAD request) and measures latency.
- * No Supabase credentials needed — this is network-level probing.
- */
 export async function GET(req: Request) {
-  const adminKey = req.headers.get("x-admin-key") || req.headers.get("X-Admin-Key");
-  if (!isValidAdminKey(adminKey)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const results = await Promise.allSettled(
-    PROJECTS.map(async (project) => {
-      const start = Date.now();
-      try {
-        const res = await fetch(project.url, {
-          method: "HEAD",
-          signal: AbortSignal.timeout(TIMEOUT_MS),
-          // Follow redirects to handle Vercel's canonical URLs
-          redirect: "follow",
-        });
-
-        const latency = Date.now() - start;
-        const isOnline = res.status < 500;
-
-        return {
-          id: project.id,
-          name: project.name,
-          url: project.url,
-          status: isOnline ? "online" : "offline",
-          latency,
-          httpCode: res.status,
-        };
-      } catch (err: any) {
-        const latency = Date.now() - start;
-        const isTimeout = err?.name === "TimeoutError" || latency >= TIMEOUT_MS;
-
-        return {
-          id: project.id,
-          name: project.name,
-          url: project.url,
-          status: "offline" as const,
-          latency,
-          httpCode: isTimeout ? 504 : 0,
-          error: isTimeout ? "Request timed out" : err?.message || "Network error",
-        };
-      }
-    })
-  );
-
-  const health: Record<string, any> = {};
-  results.forEach((result) => {
-    if (result.status === "fulfilled") {
-      const { id, ...data } = result.value;
-      health[id] = data;
+  try {
+    const adminKey = req.headers.get("x-admin-key") || req.headers.get("X-Admin-Key");
+    if (!isValidAdminKey(adminKey)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-  });
 
-  return NextResponse.json({ health, checkedAt: new Date().toISOString() });
+    // Proyectos a monitorear
+    const targets = [
+      { 
+        id: "auditacar", 
+        url: process.env.AUDITACAR_NEON_DATABASE_URL,
+        type: "neon"
+      },
+      { 
+        id: "arqovex", 
+        url: process.env.ARQOVEX_SUPABASE_URL,
+        type: "supabase"
+      }
+    ];
+
+    const health: Record<string, any> = {};
+
+    await Promise.all(targets.map(async (target) => {
+      const start = Date.now();
+      let status: "online" | "offline" = "offline";
+      let latency = 0;
+
+      if (!target.url) {
+        health[target.id] = { status: "offline", latency: 0, error: "Missing Env Var" };
+        return;
+      }
+
+      try {
+        // Ping táctico: Dependiendo del tipo de DB
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+        const res = await fetch(target.url, { 
+          method: "HEAD", // O GET / si es Supabase Rest
+          signal: controller.signal,
+          cache: "no-store"
+        });
+        
+        clearTimeout(timeoutId);
+        status = res.ok || res.status === 405 ? "online" : "offline";
+        latency = Date.now() - start;
+      } catch (err) {
+        status = "offline";
+        latency = 999;
+      }
+
+      health[target.id] = { status, latency };
+    }));
+
+    return NextResponse.json({ health });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
 }
