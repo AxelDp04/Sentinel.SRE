@@ -93,7 +93,18 @@ export const SheriffControl = () => {
                   ? 'bg-sentinel/10 border-sentinel/20 text-white rounded-br-none' 
                   : 'bg-white/[0.03] border-white/10 text-slate-200 rounded-bl-none shadow-[2px_2px_15px_rgba(0,0,0,0.3)]'
                 }`}>
-                  <p className="font-medium whitespace-pre-wrap">{msg.text}</p>
+                  <div className="font-medium whitespace-pre-wrap">
+                    {msg.text.split('\n').map((line, lineIdx) => (
+                      <div key={lineIdx} className="mb-1 last:mb-0">
+                        {line.split(/(\*\*.*?\*\*)/g).map((part, partIdx) => {
+                          if (part.startsWith('**') && part.endsWith('**')) {
+                            return <strong key={partIdx} className="text-white font-black">{part.slice(2, -2)}</strong>;
+                          }
+                          return part;
+                        })}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             ))}

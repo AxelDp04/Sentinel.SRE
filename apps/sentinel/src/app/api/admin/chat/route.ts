@@ -50,7 +50,8 @@ export async function POST(req: Request) {
       - Si Axel pide limpiar/borrar los logs de incidentes: responde con [[ACTION:CLEAR_LOGS]] al principio.
       - Si Axel pide insertar/simular un incidente/error: responde con [[ACTION:TRIGGER_ERROR]] al principio.
       - Si Axel pide limpiar/borrar la cola de JOBS: responde con [[ACTION:CLEAR_JOBS]] al principio.
-      - Si Axel pide ejecutar/crear un JOB (de éxito o fallo): responde con [[ACTION:INSERT_JOB:TYPE:FAIL]] (si es de fallo) o [[ACTION:INSERT_JOB:TYPE:SUCCESS]] (si es de éxito) al principio.
+      - Si Axel pide ejecutar un JOB de correo: extrae el correo y responde con [[ACTION:INSERT_JOB:TYPE:EMAIL:TO:correo@ejemplo.com]].
+      - Otros JOBS (éxito/fallo genérico): [[ACTION:INSERT_JOB:TYPE:FAIL]] o [[ACTION:INSERT_JOB:TYPE:SUCCESS]].
       
       PERSONALIDAD:
       - Eres el "Almirante de Infraestructura" de Axel Perez.
@@ -138,21 +139,30 @@ export async function POST(req: Request) {
         }
       }
 
-      // 4.4 Insertar Jobs (Success o Fail)
+      // 4.4 Insertar Jobs (Success, Fail o Email)
       if (sheriffResponse.includes("[[ACTION:INSERT_JOB")) {
         const isFail = sheriffResponse.includes(":TYPE:FAIL");
+        const emailMatch = sheriffResponse.match(/:TO:(.*?)\]\]/);
+        const targetEmail = emailMatch ? emailMatch[1] : null;
+        
         const { error: jobErr } = await supabase.from('nexus_jobs').insert({
-          job_type: isFail ? 'CRITICAL_DATA_SYNC' : 'EMAIL_DISPATCH',
-          payload: { force_fail: isFail },
+          job_type: targetEmail ? 'EMAIL_DISPATCH' : (isFail ? 'CRITICAL_DATA_SYNC' : 'SYSTEM_SYNC'),
+          payload: { 
+            force_fail: isFail,
+            target_email: targetEmail
+          },
           status: 'pending',
           attempts: 0
         });
 
         if (jobErr) {
-          sheriffResponse = sheriffResponse.replace(/\[\[ACTION:INSERT_JOB:TYPE:.*?\]\]/, "❌ [ERROR_AUTORIDAD] No se pudo encolar la tarea.");
+          sheriffResponse = sheriffResponse.replace(/\[\[ACTION:INSERT_JOB:.*?\]\]/, "❌ [ERROR_AUTORIDAD] No se pudo encolar la tarea.");
         } else {
-          const tag = isFail ? "🔥 [JOB_CHAOS_INJECTED]" : "⚙️ [JOB_ENQUEUED]";
-          sheriffResponse = sheriffResponse.replace(/\[\[ACTION:INSERT_JOB:TYPE:.*?\]\]/, `${tag} Tarea de fondo enviada al Worker. `);
+          let tag = "⚙️ [JOB_ENQUEUED]";
+          if (isFail) tag = "🔥 [JOB_CHAOS_INJECTED]";
+          if (targetEmail) tag = `📩 [EMAIL_JOB_QUEUED: ${targetEmail}]`;
+          
+          sheriffResponse = sheriffResponse.replace(/\[\[ACTION:INSERT_JOB:.*?\]\]/, `${tag} Tarea de fondo enviada al Worker. `);
         }
       }
 
