@@ -106,3 +106,16 @@
   animation: scanline 8s linear infinite;
   pointer-events: none;
 }
+
+@keyframes heartbeat {
+  0% { stroke-dashoffset: 600; }
+  100% { stroke-dashoffset: 0; }
+}
+
+.animate-heartbeat {
+  animation: heartbeat 2s linear infinite;
+}
+
+.animate-flatline {
+  opacity: 0.3;
+}

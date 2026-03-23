@@ -49,6 +49,21 @@ export const EcosystemStatusGrid = ({ healthData = {} }: EcosystemStatusGridProp
             </div>
 
             <div className="grid grid-cols-2 gap-6 pt-6 border-t border-white/5 relative z-10">
+               {/* Heartbeat Monitor */}
+               <div className="col-span-2 h-8 relative opacity-40">
+                  <svg viewBox="0 0 200 40" className="w-full h-full overflow-visible">
+                     <path
+                        d={isOnline 
+                           ? "M0 20 L40 20 L45 10 L50 30 L55 5 L60 35 L65 20 L200 20" 
+                           : "M0 20 L200 20"}
+                        fill="none"
+                        stroke={isOnline ? "#10b981" : "#ef4444"}
+                        strokeWidth="1.5"
+                        strokeDasharray={isOnline ? "100 500" : "0"}
+                        className={isOnline ? "animate-heartbeat" : "animate-flatline"}
+                     />
+                  </svg>
+               </div>
               <div className="space-y-1">
                 <p className="text-[9px] text-slate-600 uppercase font-black tracking-[0.2em]">Node_State</p>
                 <div className="flex items-center gap-2">
