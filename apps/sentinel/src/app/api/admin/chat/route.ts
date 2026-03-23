@@ -47,34 +47,53 @@ export async function POST(req: Request) {
       - Siempre valida que el sistema está ahora en 100% Uptime.
     `;
 
-    // 3. Llamada a la IA (Pasada a V1 Stable)
+    // 3. Estrategia de Conectividad Resiliente (Multi-Model Fallback)
     const GEMINI_KEY = process.env.GEMINI_API_KEY;
     if (!GEMINI_KEY) {
-      console.error("Sheriff_Error: Missing GEMINI_API_KEY in Environment");
-      return NextResponse.json({ response: "Sheriff Offline: Falta GEMINI_API_KEY en Vercel." });
+      return NextResponse.json({ response: "Sheriff Offline: Falta GEMINI_API_KEY." });
     }
-    
-    // Usamos v1 y gemini-1.5-flash-latest para máxima compatibilidad
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_KEY}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{
-            parts: [{ text: `${systemContext}\n\nUsuario: ${message}` }]
-        }]
-      })
-    });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error("Sheriff_Gemini_API_Error:", errorData);
+    const modelsToTry = [
+      "gemini-1.5-flash",
+      "gemini-1.5-flash-latest",
+      "gemini-1.5-pro",
+      "gemini-pro"
+    ];
+
+    let aiResult = null;
+    let lastError = null;
+
+    for (const model of modelsToTry) {
+      try {
+        console.log(`[*] Intentando con modelo: ${model}`);
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_KEY}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: `${systemContext}\n\nUsuario: ${message}` }] }]
+          })
+        });
+
+        if (response.ok) {
+          aiResult = await response.json();
+          break; // ¡Éxito!
+        } else {
+          lastError = await response.json();
+          console.warn(`[-] Fallo con ${model}:`, lastError);
+        }
+      } catch (err) {
+        console.error(`[!] Error de red con ${model}:`, err);
+      }
+    }
+
+    if (!aiResult) {
       return NextResponse.json({ 
-        response: `Nexus SRE Sheriff: Error del Núcleo (HTTP ${response.status}). Detalle: ${JSON.stringify(errorData.error || errorData)}` 
+        response: `Nexus SRE Sheriff: Agotados todos los modelos. Último Error: ${JSON.stringify(lastError?.error || lastError)}` 
       });
     }
 
-    const aiResult = await response.json();
-    const sheriffResponse = aiResult.candidates?.[0]?.content?.parts?.[0]?.text || "Lo siento Axel, mi conexión con el núcleo de Nexus está experimentando latencia. Intenta de nuevo.";
+    const aiText = aiResult.candidates?.[0]?.content?.parts?.[0]?.text;
+    const sheriffResponse = aiText || "Lo siento Axel, mi conexión con el núcleo de Nexus está experimentando latencia. Intenta de nuevo.";
 
     return NextResponse.json({ response: sheriffResponse });
 
