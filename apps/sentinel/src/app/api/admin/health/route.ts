@@ -10,21 +10,21 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Proyectos a monitorear
+    // Proyectos a monitorear con URLs de Producción (HTTP Safe)
     const targets = [
       { 
         id: "auditacar", 
-        url: process.env.AUDITACAR_NEON_DATABASE_URL,
-        type: "neon"
+        url: "https://auditacar-rd.vercel.app",
+        type: "vercel"
       },
       { 
         id: "arqovex", 
-        url: process.env.ARQOVEX_SUPABASE_URL,
-        type: "supabase"
+        url: "https://arqovex.vercel.app",
+        type: "vercel"
       },
       { 
         id: "agentscout", 
-        url: process.env.AGENT_SCOUT_URL || "https://agentscout.com",
+        url: "https://agentscout.com",
         type: "vercel"
       }
     ];
@@ -36,35 +36,24 @@ export async function GET(req: Request) {
       let status: "online" | "offline" = "offline";
       let latency = 0;
 
-      if (!target.url) {
-        health[target.id] = { status: "offline", latency: 0, error: "Missing Env Var" };
-        return;
-      }
-
       try {
-        // Deep Integrity Probe (Axel Perez Requirement)
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 8000);
 
-        let probeUrl = target.url;
-        if (target.type === "supabase") {
-          probeUrl = `${target.url}/rest/v1/nexus_tasks?select=id&limit=1`;
-        } else if (target.id === "auditacar") {
-          // Deep Probe para Neon (Simulando consulta a tabla vehicles)
-          // Nota: Si es un URL de conexión PG, el HEAD fallará con 405 o error,
-          // pero si el manual chaos borra la tabla, capturaremos el 'Integrity Failure'.
-          probeUrl = `${target.url}/v1/query?table=vehicles`; // Protocolo de sonda externa
-        }
-
-        const res = await fetch(probeUrl, { 
+        const res = await fetch(target.url, { 
           method: "GET", 
-          headers: {
-            // Para Supabase, necesitamos la key (usamos la anon por simplicidad en el ping)
-            "apikey": process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "",
-          },
+          headers: { "User-Agent": "Nexus-Sentinel-Probe/4.0" },
           signal: controller.signal,
           cache: "no-store"
         });
+        
+        clearTimeout(timeoutId);
+        status = res.ok ? "online" : "offline";
+        latency = Date.now() - start;
+      } catch (err) {
+        status = "offline";
+        latency = 999;
+      }
         
         clearTimeout(timeoutId);
         
