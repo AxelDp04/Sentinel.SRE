@@ -12,12 +12,12 @@ SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
 def trigger_sacrifice():
     print("\n🎬 [DEMO] Disparando Trigger de Sacrificio directo a Supabase...")
     
-    # Payload para el Segundo Sacrificio (Nivel Corporativo - Integridad)
+    # Payload para el Incidente #4 (Emergencia de Infraestructura - Vercel)
     error_data = {
         "project_name": "AUDITACAR",
-        "error_description": "ERROR: column 'vehicle_uuid' does not exist in table 'vehicle_logs'. Structural Integrity Failure during Red-Green Deployment.",
+        "error_description": "CRITICAL: 504 GATEWAY_TIMEOUT. Middleware Connectivity Lost during Edge Function execution. Vercel deployment unresponsive.",
         "status": "pending",
-        "resolution_steps": ["Sentinel: Fallo de integridad en AuditaCar detected. Initiating Critical Schema Audit."]
+        "resolution_steps": ["Sentinel: Detectando inestabilidad en el Middleware de Vercel. Descartando fallo SQL."]
     }
 
     url = f"{SUPABASE_URL}/rest/v1/nexus_tasks"

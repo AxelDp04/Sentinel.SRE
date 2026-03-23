@@ -111,7 +111,12 @@ def action_node(state: NexusState):
     
     if project == "AUDITACAR":
         state["resolution_steps"].append(f"Isolation: Nexus artillería apuntada a Neon ({neon_target[:15]}...)")
-        if "missing" in error_desc.lower() or "renamed" in error_desc.lower() or "intervention" in error_desc.lower():
+        if "504" in error_desc or "timeout" in error_desc.lower() or "gateway" in error_desc.lower():
+            state["action_executed"] = "VERCEL_INFRASTRUCTURE_RESCUE"
+            state["resolution_steps"].append("ALERT: Middleware Connectivity Lost (504 Gateway Timeout).")
+            state["resolution_steps"].append("Diagnostic: El fallo no reside en el núcleo SQL (Neon), sino en el Deployment Layer de Vercel.")
+            state["resolution_steps"].append("Action Engine: Solicitando 'Clean Redeploy' vía Vercel Hook API.")
+        elif "missing" in error_desc.lower() or "renamed" in error_desc.lower() or "intervention" in error_desc.lower():
             state["action_executed"] = "EXTERNAL_INTRUSION_SHIELD"
             state["resolution_steps"].append("CRITICAL: Table missing or renamed in Neon_DB. Manual Intervention Detected.")
             state["resolution_steps"].append("Action Engine: Bloqueando acceso a API Gateway de AuditaCar por seguridad.")
