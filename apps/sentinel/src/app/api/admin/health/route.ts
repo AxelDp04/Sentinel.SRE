@@ -33,7 +33,7 @@ export async function GET(req: Request) {
 
     await Promise.all(targets.map(async (target) => {
       const start = Date.now();
-      let status: "online" | "offline" = "offline";
+      let status: "online" | "offline" | "integrity_failure" = "offline";
       let latency = 0;
 
       try {
@@ -48,18 +48,9 @@ export async function GET(req: Request) {
         });
         
         clearTimeout(timeoutId);
-        status = res.ok ? "online" : "offline";
-        latency = Date.now() - start;
-      } catch (err) {
-        status = "offline";
-        latency = 999;
-      }
         
-        clearTimeout(timeoutId);
-        
-        // Si el status es 404 para una tabla, es un Integrity Failure
         if (res.status === 404) {
-          status = "integrity_failure" as any;
+          status = "integrity_failure";
         } else {
           status = res.ok ? "online" : "offline";
         }
