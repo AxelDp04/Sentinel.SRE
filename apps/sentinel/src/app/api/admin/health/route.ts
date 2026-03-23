@@ -13,13 +13,18 @@ export async function GET(req: Request) {
     // Proyectos a monitorear
     const targets = [
       { 
+        id: "auditacar", 
+        url: process.env.AUDITACAR_NEON_DATABASE_URL,
+        type: "neon"
+      },
+      { 
         id: "arqovex", 
         url: process.env.ARQOVEX_SUPABASE_URL,
         type: "supabase"
       },
       { 
         id: "agentscout", 
-        url: process.env.AGENT_SCOUT_URL || "https://agentscout.com", // Fallback for Demo
+        url: process.env.AGENT_SCOUT_URL || "https://agentscout.com",
         type: "vercel"
       }
     ];
