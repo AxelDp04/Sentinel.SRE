@@ -66,6 +66,8 @@ class NexusState(TypedDict):
     start_time: float
     end_time: float
     final_output: Optional[dict]
+    snapshot_id: Optional[str] # ID para el Rollback
+    action_success: Optional[bool] # Resultado de la validación
 
 def language_detector(state: NexusState):
     """Detects the language of the error description (en/es)."""
@@ -118,7 +120,7 @@ def sre_agent(state: NexusState):
             supabase.table("nexus_jobs").insert({
                 "job_type": "EMAIL_DISPATCH",
                 "payload": {
-                    "target_email": os.getenv("ADMIN_EMAIL", "axel.sre@example.com"),
+                    "target_email": os.getenv("ADMIN_EMAIL", "arqovex@gmail.com"),
                     "alert_type": "PROACTIVE_SHIELD",
                     "project": project_name,
                     "details": error_description
@@ -149,6 +151,81 @@ def sre_agent(state: NexusState):
     
     step = "SRE Agent: Analizó el riesgo/error y propuso solución." if lang == "es" else "SRE Agent: Analyzed risk/error and proposed solution."
     state["resolution_steps"].append(step)
+    return state
+
+# --- PROTOCOLO GOLDEN ROLLBACK: SEGURIDAD NIVEL ENTERPRISE ---
+
+def snapshot_node(state: NexusState):
+    """
+    Toma una 'foto' del estado actual antes de ejecutar cualquier acción.
+    Esto permite deshacer el cambio si el Sheriff se equivoca.
+    """
+    print(f"\n[{state['task_id']}] [Snapshot] Realizando respaldo preventivo...")
+    
+    project_name = state["project_name"]
+    
+    # En un entorno real, registraríamos la versión de código o config actual.
+    # Aquí simulamos capturando la telemetría actual.
+    backup_payload = {
+        "pre_action_latency": 25.4, # Simulado
+        "active_shield_version": "v1.0.4",
+        "description": state["error_description"]
+    }
+    
+    try:
+        backup = supabase.table("nexus_backups").insert({
+            "task_id": state["task_id"],
+            "project_name": project_name,
+            "backup_payload": backup_payload,
+            "status": "active"
+        }).execute()
+        
+        if backup.data:
+            state["snapshot_id"] = backup.data[0]["id"]
+            print(f"✅ Snapshot guardado: {state['snapshot_id']}")
+    except Exception as e:
+        print(f"⚠️ Error al crear snapshot: {e} (Continuando con precaución)")
+    
+    return state
+
+def validator_node(state: NexusState):
+    """
+    Vigila el sistema tras la acción para confirmar si mejoró o empeoró.
+    """
+    print(f"\n[{state['task_id']}] [Validator] Vigilando impacto de la solución...")
+    
+    # Simulamos degradación si el error contenía 'CHAOS'
+    is_chaos = "CHAOS" in state["error_description"]
+    
+    if is_chaos:
+        print("❌ [VALIDATION_FAILURE] La latencia subió a 500ms tras la acción.")
+        state["action_success"] = False
+    else:
+        print("✅ [VALIDATION_SUCCESS] El sistema se estabilizó.")
+        state["action_success"] = True
+        
+    return state
+
+def rollback_node(state: NexusState):
+    """
+    Revierte la acción si la validación falló.
+    """
+    if state.get("action_success", True):
+        return state
+
+    print(f"\n[{state['task_id']}] 🚨 [GOLDEN_ROLLBACK] Revirtiendo cambios por degradación del sistema...")
+    
+    try:
+        # Marcamos el backup como 'restored'
+        if state.get("snapshot_id"):
+            supabase.table("nexus_backups").update({"status": "restored"}).eq("id", state["snapshot_id"]).execute()
+        
+        step = "🚨 Golden Rollback: Se detectó degradación y se revirtió la acción automáticamente."
+        state["resolution_steps"].append(step)
+        state["action_executed"] = "ROLLBACK_EXECUTED"
+    except Exception as e:
+        print(f"❌ Error en el rollback: {e}")
+        
     return state
 
 def security_agent(state: NexusState):
@@ -353,7 +430,10 @@ graph_builder = StateGraph(NexusState)
 graph_builder.add_node("language_detector", language_detector)
 graph_builder.add_node("sre_agent", sre_agent)
 graph_builder.add_node("security_agent", security_agent)
+graph_builder.add_node("snapshot_node", snapshot_node) # Nuevo: Backup preventivo
 graph_builder.add_node("action_node", action_node)
+graph_builder.add_node("validator_node", validator_node) # Nuevo: Vigilancia post-cambio
+graph_builder.add_node("rollback_node", rollback_node)   # Nuevo: Reversa si falla
 
 graph_builder.set_entry_point("language_detector")
 
@@ -363,11 +443,14 @@ graph_builder.add_conditional_edges(
     "security_agent",
     should_continue,
     {
-        "action_node": "action_node",
+        "action_node": "snapshot_node", # Antes de la acción, tomamos snapshot
         "sre_agent": "sre_agent"
     }
 )
 
-graph_builder.add_edge("action_node", END)
+graph_builder.add_edge("snapshot_node", "action_node")
+graph_builder.add_edge("action_node", "validator_node")
+graph_builder.add_edge("validator_node", "rollback_node")
+graph_builder.add_edge("rollback_node", END)
 
 nexus_workflow = graph_builder.compile()

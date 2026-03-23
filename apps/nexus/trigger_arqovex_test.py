@@ -2,7 +2,9 @@ import os
 import requests
 from dotenv import load_dotenv
 
-load_dotenv()
+# Usamos ruta relativa
+current_dir = os.path.dirname(os.path.abspath(__file__))
+load_dotenv(dotenv_path=os.path.join(current_dir, ".env"))
 
 # --- CONFIG ---
 SUPABASE_URL = os.getenv("SUPABASE_URL") or "https://badqkfvbymxyqtwpnejd.supabase.co"

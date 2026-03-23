@@ -18,9 +18,12 @@ print(f"[*] Inyectando tarea en Supabase: {test_task['project_name']}...")
 
 try:
     response = supabase.table("nexus_tasks").insert(test_task).execute()
-    print("✅ [SUCCESS] Tarea inyectada satisfactoriamente.")
-    print(f"ID de Tarea: {response.data[0]['id']}")
-    print("\nEl motor de Nexus en Railway debería procesar esto en los próximos segundos.")
-    print("Espera el WhatsApp con el reporte dinámico.")
+    if response.data:
+        print("✅ [SUCCESS] Tarea inyectada satisfactoriamente.")
+        print(f"ID de Tarea: {response.data[0]['id']}")
+        print("\nEl motor de Nexus en Railway debería procesar esto en los próximos segundos.")
+        print("Espera el reporte dinámico.")
+    else:
+        print("⚠️ [WARNING] La tarea se envió pero no se recibió confirmación de ID.")
 except Exception as e:
     print(f"❌ [ERROR] Fallo al inyectar tarea: {e}")

@@ -1,34 +1,23 @@
-import os
-import requests
-from dotenv import load_dotenv
-
-load_dotenv()
-
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+from database import supabase
 
 def cleanup_nexus():
-    print("\n🧼 [CLEANUP] Iniciando Purga Total de Nexus Sentinel...")
+    print("🧹 Iniciando limpieza de emergencia en Nexus...")
     
-    if not SUPABASE_URL or not SUPABASE_KEY:
-        print("❌ Error: Missing Supabase credentials in environment.")
-        return
+    # 1. Borrar Jobs fallidos por el tema de Resend
+    try:
+        res_jobs = supabase.table("nexus_jobs").delete().eq("status", "failed").execute()
+        print(f"✅ Se han eliminado los Jobs fallidos.")
+    except Exception as e:
+        print(f"❌ Error limpiando jobs: {e}")
 
-    # Delete all rows from nexus_tasks
-    url = f"{SUPABASE_URL}/rest/v1/nexus_tasks?id=neq.0" # Match all non-zero IDs (or just id=not.is.null)
-    headers = {
-        "apikey": SUPABASE_KEY,
-        "Authorization": f"Bearer {SUPABASE_KEY}",
-        "Content-Type": "application/json",
-        "Prefer": "count=exact"
-    }
+    # 2. Borrar Tareas de error que se generaron en bucle
+    try:
+        res_tasks = supabase.table("nexus_tasks").delete().eq("project_name", "NEXUS_JOBS").execute()
+        print(f"✅ Se han eliminado las tareas de error cíclico.")
+    except Exception as e:
+        print(f"❌ Error limpiando tareas: {e}")
 
-    res = requests.delete(url, headers=headers)
-    if res.status_code in [200, 204]:
-        print("✅ NEXUS PURGE SUCCESSFUL: Historial de incidentes eliminado.")
-        print("🛰️  Dashboard en CERO inminente.")
-    else:
-        print(f"❌ Error al purgar incidentes: {res.status_code} | {res.text}")
+    print("\n✨ Nexus Dashboard restaurado. ¡Listo para operar con el nuevo parche!")
 
 if __name__ == "__main__":
     cleanup_nexus()

@@ -1,17 +1,20 @@
+import sys
 from supabase import create_client, Client
 import random
 import os
 from dotenv import load_dotenv
 
 # Load the environment variables from the apps/nexus .env
-load_dotenv(dotenv_path="C:/Users/User/OneDrive/Desktop/Nexus/apps/nexus/.env")
+# Usamos ruta relativa para mejor compatibilidad
+current_dir = os.path.dirname(os.path.abspath(__file__))
+load_dotenv(dotenv_path=os.path.join(current_dir, ".env"))
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
 
 if not SUPABASE_URL or not SUPABASE_KEY:
     print("WARNING: Missing SUPABASE_URL or SUPABASE_SERVICE_KEY in .env")
-    exit(1)
+    sys.exit(1)
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 

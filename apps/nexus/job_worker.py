@@ -46,6 +46,14 @@ def send_real_email(target_email, job_id, job_type):
     """
     Usa la API de Resend para enviar un correo de verdad.
     """
+    # --- PROTOCOLO DE SEGURIDAD (FREE TIER) ---
+    # Resend en modo prueba solo permite enviar a la cuenta del dueño (arqovex@gmail.com).
+    # Redirigimos cualquier otro correo allí para evitar errores 403/429.
+    VERIFIED_EMAIL = "arqovex@gmail.com"
+    if target_email != VERIFIED_EMAIL:
+        print(f"⚠️ [RESEND_GUARD] Redirigiendo de {target_email} a {VERIFIED_EMAIL} (Restricción de Free Tier)")
+        target_email = VERIFIED_EMAIL
+
     try:
         print(f"[*] Resend: Despachando correo real a {target_email}...")
         params = {
