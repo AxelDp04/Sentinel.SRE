@@ -1,8 +1,13 @@
+# --- EXPLICACIÓN EDUCATIVA: EL WORKER DE TRABAJOS (EL OBRERO) ---
+# Este script es un "Worker" que corre en segundo plano. Su única misión es
+# mirar la tabla 'nexus_jobs' y ejecutar lo que encuentre ahí.
+# Esto separa la "inteligencia" del Sheriff de la "ejecución" pesada.
+
 import time
 import os
 import json
-import resend # Nuevo: Motor de correos real
-from database import supabase, update_task_status
+import resend # Motor de correos real
+from database import supabase
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -10,15 +15,15 @@ resend.api_key = os.getenv("RESEND_API_KEY")
 
 def poll_nexus_jobs():
     """
-    Polls the 'nexus_jobs' table for pending tasks and executes them.
+    Función de sondeo (Polling). Revisa la base de datos cada 5 segundos.
     """
     if not supabase:
-        print("❌ Worker: Supabase not connected.")
+        print("❌ Worker: Supabase no conectado.")
         return
 
     while True:
         try:
-            # 1. Fetch pending jobs
+            # 1. Buscamos trabajos con estado 'pending'
             res = supabase.table("nexus_jobs") \
                 .select("*") \
                 .eq("status", "pending") \
@@ -28,36 +33,35 @@ def poll_nexus_jobs():
             jobs = res.data or []
             
             if jobs:
-                print(f"[*] Worker: {len(jobs)} jobs detected. Processing...")
-                
+                print(f"[*] Worker: {len(jobs)} trabajos detectados. Procesando...")
                 for job in jobs:
                     process_job(job)
             
-            time.sleep(5) # Poll every 5 seconds
+            time.sleep(5) # Esperamos para no saturar la DB
         except Exception as e:
-            print(f"❌ Worker Error: {e}")
+            print(f"❌ Error en el Worker: {e}")
             time.sleep(10)
 
 def send_real_email(target_email, job_id, job_type):
     """
-    Sends a real-world email using Resend.
+    Usa la API de Resend para enviar un correo de verdad.
     """
     try:
         print(f"[*] Resend: Despachando correo real a {target_email}...")
         params = {
             "from": "Nexus SRE <onboarding@resend.dev>",
             "to": [target_email],
-            "subject": f"🛰️ Nexus Sentinel: Reporte Técnico de Job [{job_type}]",
+            "subject": f"🛰️ Nexus Sentinel: Alerta de Infraestructura",
             "html": f"""
-                <div style="font-family: sans-serif; background: #0a0a0c; color: #fff; padding: 40px; border-radius: 10px;">
-                    <h1 style="color: #10b981; margin-bottom: 20px;">🛰️ NEXUS SENTINEL</h1>
-                    <p style="font-size: 16px; color: #94a3b8;">El Almirante SRE ha solicitado el despacho de este reporte técnico.</p>
-                    <div style="background: #1a1a1c; padding: 20px; border-radius: 8px; border-left: 4px solid #10b981;">
-                        <p><strong>JOB_ID:</strong> {job_id}</p>
-                        <p><strong>PROTOCOLO:</strong> {job_type}</p>
-                        <p><strong>ESTADO:</strong> COMPLETED</p>
+                <div style="font-family: sans-serif; background: #0a0a0c; color: #fff; padding: 40px; border-radius: 10px; border: 1px solid #1e293b;">
+                    <h1 style="color: #10b981; margin-bottom: 20px; font-size: 24px;">🛰️ NEXUS SENTINEL</h1>
+                    <p style="font-size: 16px; color: #94a3b8;">El Almirante SRE ha generado una notificación automática.</p>
+                    <div style="background: #111827; padding: 20px; border-radius: 8px; border-left: 4px solid #10b981; margin: 20px 0;">
+                        <p style="margin: 5px 0;"><strong>PROYECTO:</strong> NEXUS_ECOSYSTEM</p>
+                        <p style="margin: 5px 0;"><strong>PROTOCOLO:</strong> {job_type}</p>
+                        <p style="margin: 5px 0;"><strong>ESTADO:</strong> OPERATIVO / ALERTA</p>
                     </div>
-                    <p style="margin-top: 30px; font-size: 12px; color: #475569;">Nexus Engine v5.0 - Resiliencia Autónoma Garantizada.</p>
+                    <p style="color: #64748b; font-size: 14px;">"Resiliencia absoluta a través de la automatización."</p>
                 </div>
             """,
         }
@@ -67,6 +71,9 @@ def send_real_email(target_email, job_id, job_type):
         return False, str(e)
 
 def process_job(job):
+    """
+    Lógica individual para procesar cada tarea (Job).
+    """
     job_id = job["id"]
     job_type = job["job_type"]
     attempts = job.get("attempts", 0)
@@ -74,57 +81,26 @@ def process_job(job):
     payload = job.get("payload", {})
     target_email = payload.get("target_email")
     
-    print(f"[*] Processing Job [{job_id}] | Type: {job_type} | Attempt: {attempts+1}/{max_attempts}")
-    
-    # Update status to running
+    # Actualizamos el estado a 'running' para que nadie más lo tome
     supabase.table("nexus_jobs").update({"status": "running", "attempts": attempts + 1}).eq("id", job_id).execute()
     
-    time.sleep(2) # Simulate work latency
-    
-    # --- REAL/SIMULATED LOGIC ---
+    # --- LÓGICA DE TRABAJO ---
     success = True
     error_msg = None
     
-    # Forzar error si el payload lo indica
-    if payload.get("force_fail") == True and (attempts + 1) < max_attempts:
-        success = False
-        error_msg = "Simulated Fail: External API Timeout."
-    
-    # Si es un JOB de EMAIL y tenemos un correo, intentamos envío real
-    if success and job_type == 'EMAIL_DISPATCH' and target_email:
+    # Si el trabajo es de tipo CORREO, lo mandamos
+    if job_type == 'EMAIL_DISPATCH' and target_email:
         success, error_msg = send_real_email(target_email, job_id, job_type)
 
     if success:
-        print(f"✅ Job [{job_id}] COMPLETED.")
-        supabase.table("nexus_jobs").update({
-            "status": "completed", 
-            "last_error": None
-        }).eq("id", job_id).execute()
+        print(f"✅ Job [{job_id}] COMPLETADO.")
+        supabase.table("nexus_jobs").update({"status": "completed"}).eq("id", job_id).execute()
     else:
-        print(f"⚠️ Job [{job_id}] FAILED. (Attempt {attempts + 1})")
+        # Si falla, re-intentamos hasta el máximo permitido
+        print(f"⚠️ Job [{job_id}] FALLÓ. Re-intento {(attempts + 1)}")
         new_status = "pending" if (attempts + 1) < max_attempts else "failed"
-        
-        supabase.table("nexus_jobs").update({
-            "status": new_status, 
-            "last_error": error_msg
-        }).eq("id", job_id).execute()
-        
-        # If exhausted, trigger Nexus Incident
-        if new_status == "failed":
-            trigger_nexus_incident(job, error_msg)
-
-def trigger_nexus_incident(job, error):
-    """
-    Escalates a failed job to the Nexus SRE Engine.
-    """
-    print(f"🚨 EXHAUSTED: Triggering Nexus SRE Incident for Job {job['id']}")
-    incident_data = {
-        "project_name": "NEXUS_JOBS",
-        "error_description": f"CRITICAL_JOB_FAILURE: Job '{job['job_type']}' ({job['id']}) exhausted {job['max_attempts']} retries. Last error: {error}",
-        "status": "pending"
-    }
-    supabase.table("nexus_tasks").insert(incident_data).execute()
+        supabase.table("nexus_jobs").update({"status": new_status, "last_error": error_msg}).eq("id", job_id).execute()
 
 if __name__ == "__main__":
-    print("🚀 Nexus Distributed Job Worker Started...")
+    print("🚀 Nexus Job Worker activado y vigilando la cola...")
     poll_nexus_jobs()

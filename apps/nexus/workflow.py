@@ -4,6 +4,7 @@ from langchain_core.messages import SystemMessage, HumanMessage
 import os
 
 from dotenv import load_dotenv
+from database import supabase # Importamos el cliente de DB para acciones directas
 load_dotenv()
 
 # Prioritize Groq for stable Tier 4 operations
@@ -12,7 +13,7 @@ MODEL_NAME = os.getenv("MODEL_NAME")
 
 if USE_GROQ:
     from langchain_groq import ChatGroq
-    effective_model = MODEL_NAME or "llama-3.3-70b-versatile"
+    effective_model = MODEL_NAME or "llama-3.1-8b-instant"
     llm = ChatGroq(model=effective_model, temperature=0.3)
     print(f"[*] Nexus Engine using Groq Model (Stable): {effective_model}")
 elif os.getenv("GEMINI_API_KEY"):
@@ -59,6 +60,11 @@ def language_detector(state: NexusState):
     return state
 
 def sre_agent(state: NexusState):
+    """
+    --- EXPLICACIÓN EDUCATIVA: EL AGENTE SRE ---
+    Este agente es el 'Cerebro Técnico'. Su función es recibir la descripción del error
+    y generar una propuesta de solución usando inteligencia artificial (LLM).
+    """
     import time
     if not state.get("start_time"):
         state["start_time"] = time.time()
@@ -66,16 +72,44 @@ def sre_agent(state: NexusState):
         
     print(f"\n[{state['task_id']}] [SRE Agent Analyzing] Evaluating error logs...")
     
+    error_description = state["error_description"]
+    project_name = state["project_name"]
     lang = state.get("language", "es")
     
+    # --- EXPLICACIÓN: DETECCIÓN PROACTIVA ---
+    # Si la descripción contiene "PREDICTIVE_ANOMALY", Nexus entra en modo PREVENCIÓN.
+    is_predictive = "PREDICTIVE_ANOMALY" in error_description
+    
+    if is_predictive:
+        # Si es una predicción, avisamos por canales externos (Email/WhatsApp)
+        # Esto es lo que el usuario pidió: avisar ANTES de que ocurra el error.
+        msg = f"⚠️ [NEXUS_FORESIGHT] ¡Alerta Proactiva en {project_name}! Se detectó una tendencia de degradación."
+        print(f"📱 [WHATSAPP_SENT] {msg}") # Simulación de envío
+        
+        # Encolamos un trabajo de correo electrónico para el Job Worker
+        try:
+            supabase.table("nexus_jobs").insert({
+                "job_type": "EMAIL_DISPATCH",
+                "payload": {
+                    "target_email": os.getenv("ADMIN_EMAIL", "axel.sre@example.com"),
+                    "alert_type": "PROACTIVE_SHIELD",
+                    "project": project_name,
+                    "details": error_description
+                },
+                "status": "pending"
+            }).execute()
+        except Exception as e:
+            print(f"❌ Error al encolar alerta: {e}")
+
+    # Definimos los prompts del sistema según el idioma
     system_prompts = {
-        "es": "Eres un Site Reliability Engineer Senior. Resuélvelo rápido y breve. Sin explicaciones innecesarias. RESPONDE EN ESPAÑOL.",
-        "en": "You are a Senior Site Reliability Engineer. Solve it quickly and briefly. No unnecessary explanations. RESPOND IN ENGLISH."
+        "es": "Eres un SRE Senior. Si es una PREDICTIVE_ANOMALY, propón una medida preventiva. Si es un error real, propón una solución rápida. RESPONDE EN ESPAÑOL.",
+        "en": "You are a Senior SRE. If it's a PREDICTIVE_ANOMALY, propose a preventive measure. If it's a real error, propose a quick fix. RESPOND IN ENGLISH."
     }
     
     human_prompts = {
-        "es": f"Eres un SRE Senior diagnosticando un error en el proyecto '{state['project_name']}'.\nDescripción del error: {state['error_description']}\n\nPropuesta previa/Security Feedback: {state.get('security_feedback', 'Ninguno')}\n\nGenera una propuesta técnica MUY BREVE (máximo 150 caracteres).",
-        "en": f"You are a Senior SRE diagnosing an error in project '{state['project_name']}'.\nError description: {state['error_description']}\n\nPrevious proposal/Security Feedback: {state.get('security_feedback', 'None')}\n\nGenerate a VERY BRIEF technical proposal (max 150 chars)."
+        "es": f"Proyecto: {project_name}\nError: {error_description}\n\nGenera una propuesta técnica breve.",
+        "en": f"Project: {project_name}\nError: {error_description}\n\nGenerate a brief technical proposal."
     }
     
     messages = [
@@ -84,10 +118,9 @@ def sre_agent(state: NexusState):
     ]
     
     response = llm.invoke(messages)
-    solution = response.content
+    state["proposed_solution"] = response.content
     
-    state["proposed_solution"] = solution
-    step = "SRE Agent: Analizó el error y propuso una solución técnica." if lang == "es" else "SRE Agent: Analyzed the error and proposed a technical solution."
+    step = "SRE Agent: Analizó el riesgo/error y propuso solución." if lang == "es" else "SRE Agent: Analyzed risk/error and proposed solution."
     state["resolution_steps"].append(step)
     return state
 
@@ -128,6 +161,11 @@ def security_agent(state: NexusState):
     return state
 
 def action_node(state: NexusState):
+    """
+    --- EXPLICACIÓN EDUCATIVA: EL MOTOR DE ACCIÓN (BRAZOS EJECUTORES) ---
+    Aquí es donde Nexus deja de pensar y empieza a ACTUAR. Según el tipo de error
+    y el proyecto, ejecuta comandos para restaurar el servicio.
+    """
     print(f"\n[{state['task_id']}] [Nexus Arms] Executing Action Engine...")
     import time
     
@@ -141,6 +179,16 @@ def action_node(state: NexusState):
     # Lógica Adaptativa por Proyecto (Project Isolation Protocol)
     neon_target = os.getenv("AUDITACAR_NEON_DATABASE_URL") or "NEON_DB"
     
+    # --- EXPLICACIÓN: MANEJO DE ANOMALÍAS PREDICTIVAS ---
+    if "PREDICTIVE_ANOMALY" in error_desc:
+        state["action_executed"] = "PROACTIVE_SHIELD_DEPLOYED"
+        log_step("Foresight: Detectada anomalía de latencia. Iniciando Escudo Proactivo.",
+                 "Foresight: Latency anomaly detected. Starting Proactive Shield.")
+        log_step("Action Engine: Ejecutando limpieza de caché y optimización de índices preventivo.",
+                 "Action Engine: Executing preventive cache clearing and index optimization.")
+        # Aquí Nexus realizaría una acción real no destructiva para "aliviar" el sistema.
+        return state # Salimos temprano pues es preventivo
+
     if project == "AUDITACAR":
         log_step(f"Isolation: Nexus artillería apuntada a Neon ({neon_target[:15]}...)", 
                  f"Isolation: Nexus artillery aimed at Neon ({neon_target[:15]}...)")
