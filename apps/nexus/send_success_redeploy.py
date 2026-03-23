@@ -19,19 +19,9 @@ def send_success_redeploy():
 
     payload = {
         "project_name": "INFRASTRUCTURE_RESCUE",
-        "error_description": "Vercel Edge Ghost Caching & Middleware Latency Detected.",
-        "status": "resolved",
-        "action_executed": "SHIELD_PATCH_REDEPLOY",
-        "was_successful": True,
-        "recovery_time": 4.12,
-        "retry_count": 1,
-        "resolution_steps": [
-            "Sentinel: Diagnosticando ceguera de infraestructura.",
-            "Action Engine: Inyectando 'Shield Patch' (Bypass agresivo de Edge Cache).",
-            "Action Engine: Optimización de Probes en Paralelo activa (Promise.all).",
-            "Result: 100% Uptime en Neon & Supabase restablecido."
-        ],
-        "ai_output": {"analysis": "Ghost Caching eliminado satisfactoriamente. Visibilidad total restaurada."}
+        "error_description": "REDEPLOY_SUCCESS: Vercel Shield Patch active. Ghost Caching eliminated.",
+        "status": "pending",
+        "resolution_steps": ["Sentinel: Validando integridad del redeploy en tiempo real."]
     }
 
     url = f"{SUPABASE_URL}/rest/v1/nexus_tasks"

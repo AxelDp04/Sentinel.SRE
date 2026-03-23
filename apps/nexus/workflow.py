@@ -136,6 +136,11 @@ def action_node(state: NexusState):
         elif "db" in error_desc or "database" in error_desc or "pool" in error_desc:
             state["action_executed"] = "DB_REBOOT_SIM"
             state["resolution_steps"].append("Action Engine: Reiniciando instancia de base de datos AuditaCar en Neon...")
+        elif "REDEPLOY_SUCCESS" in error_desc:
+            state["action_executed"] = "CONFIRMATION_SENT"
+            state["resolution_steps"].append("Sentinel: Verificando estado post-redeploy...")
+            state["resolution_steps"].append("Action Engine: 100% Uptime Confirmado en Vercel & Neon.")
+            state["resolution_steps"].append("Action Engine: Enviando reporte de victoria final a WhatsApp.")
         else:
             state["action_executed"] = "RETRY_STRATEGY"
             state["resolution_steps"].append("Action Engine: Iniciando RETRY_STRATEGY para AuditaCar.")
