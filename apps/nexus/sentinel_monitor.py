@@ -14,35 +14,51 @@ SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or "eyJhbGciOiJIUzI1NiIsIn
 def run_sentinel_monitor():
     print("🕵️‍♂️ [MONITOR] Nexus Sentinel: Vigilancia Externa Iniciada (Tier 4)...")
     
+    import psycopg2
+    NEON_URL = "postgresql://neondb_owner:npg_ri3jqv5BzQCT@ep-sweet-forest-anvtkthr-pooler.c-6.us-east-1.aws.neon.tech/neondb?sslmode=require"
+
     while True:
         try:
-            print("🔍 Probing Deep Integrity Health...")
+            print("🔍 Probing Neon Structural Integrity Directly...")
             
-            # 1. Consultar estado activo para evitar duplicados
-            headers = {"apikey": SUPABASE_KEY, "Authorization": f"Bearer {SUPABASE_KEY}"}
-            check_url = f"{SUPABASE_URL}/rest/v1/nexus_tasks?select=id&status=eq.pending&project_name=eq.AUDITACAR"
-            active_tasks = requests.get(check_url, headers=headers).json()
-            
-            if not active_tasks:
-                # 2. DETECCIÓN DE CAOS (SIMULADO)
-                # En la demo, el monitor inyecta el evento si el HEALTH_CHECK externo 
-                # (disparado por Axel en Neon) es detectado por el motor.
+            # 1. Intento de conexión y consulta a la tabla crítica
+            integrity_failure = False
+            try:
+                conn = psycopg2.connect(NEON_URL)
+                cur = conn.cursor()
+                cur.execute("SELECT 1 FROM vehicles LIMIT 1;")
+                cur.close()
+                conn.close()
+                print("🟢 Structural Integrity: Healthy.")
+            except psycopg2.Error as e:
+                if "does not exist" in str(e):
+                    print(f"🚨 ALERT: Table 'vehicles' MISSING! {e}")
+                    integrity_failure = True
+                else:
+                    print(f"⚠️ Neon Connection Issue: {e}")
+
+            if integrity_failure:
+                # 2. Verificar si ya hay una tarea pendiente para evitar spam
+                headers_supa = {"apikey": SUPABASE_KEY, "Authorization": f"Bearer {SUPABASE_KEY}"}
+                check_url = f"{SUPABASE_URL}/rest/v1/nexus_tasks?select=id&status=eq.pending&project_name=eq.AUDITACAR"
+                active_tasks = requests.get(check_url, headers=headers_supa).json()
                 
-                # Para esta fase, DISPARAMOS el evento de INTRUSIÓN MANUAL
-                # ya que Axel lo está ejecutando en Neon.
+                if not active_tasks:
+                    print("🚨 CRITICAL: Real Integrity Failure Detected. Triggering Nexus...")
+                    
+                    payload = {
+                        "project_name": "AUDITACAR",
+                        "error_description": "CRITICAL: Table 'vehicles' missing or renamed in Neon_DB. [AUTO_DETECTED_VIA_DIRECT_PROBE]",
+                        "status": "pending",
+                        "resolution_steps": ["Sentinel: Detectando alteración estructural proactivamente vía Direct Probe."]
+                    }
+                    
+                    requests.post(f"{SUPABASE_URL}/rest/v1/nexus_tasks", headers=headers_supa, json=payload)
+                    print("✅ Nexus ha tomado el control del evento externo.")
+                else:
+                    print("⏳ Nexus ya está trabajando en este incidente.")
                 
-                print("🚨 CRITICAL: External Chaos Detected (Table missing). Auto-Triggering Nexus...")
-                
-                payload = {
-                    "project_name": "AUDITACAR",
-                    "error_description": "CRITICAL: Table 'vehicles' missing or renamed in Neon_DB. Manual Intervention Detected via Deep Probe.",
-                    "status": "pending",
-                    "resolution_steps": ["Sentinel: Intrusión externa detectada en consola de Neon. Activando Protocolo Shield."]
-                }
-                
-                requests.post(f"{SUPABASE_URL}/rest/v1/nexus_tasks", headers=headers, json=payload)
-                print("✅ Nexus ha tomado el control del evento externo.")
-                break # Para la demo, disparamos una sola vez
+            time.sleep(5)
                 
             time.sleep(5)
             
