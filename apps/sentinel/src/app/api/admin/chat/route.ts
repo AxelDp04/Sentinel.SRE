@@ -47,14 +47,15 @@ export async function POST(req: Request) {
       - Siempre valida que el sistema está ahora en 100% Uptime.
     `;
 
-    // 3. Llamada a la IA
+    // 3. Llamada a la IA (Pasada a V1 Stable)
     const GEMINI_KEY = process.env.GEMINI_API_KEY;
     if (!GEMINI_KEY) {
       console.error("Sheriff_Error: Missing GEMINI_API_KEY in Environment");
       return NextResponse.json({ response: "Sheriff Offline: Falta GEMINI_API_KEY en Vercel." });
     }
     
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`, {
+    // Usamos v1 y gemini-1.5-flash-latest para máxima compatibilidad
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_KEY}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
