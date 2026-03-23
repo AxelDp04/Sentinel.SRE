@@ -16,6 +16,7 @@ import { SheriffPanel } from "@/components/ui/SheriffPanel";
 import { MobileNavBar } from "@/components/layout/MobileNavBar";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { SheriffControl } from "@/components/ui/SheriffControl";
+import { SRECommandCenter } from "@/components/ui/SRECommandCenter";
 import { supabase } from "@/lib/supabase";
 
 export default function Home() {
@@ -128,6 +129,15 @@ export default function Home() {
             <div className="w-full">
               <VitalityFlowMonitor />
             </div>
+
+            {/* CATEGORY 0: RESILIENCE COMMAND CENTER (ELITE METRICS) */}
+            <section className="space-y-8 animate-in fade-in zoom-in-95 duration-1000 delay-300">
+               <div className="flex items-center gap-6">
+                  <span className="text-[11px] font-black uppercase tracking-[0.5em] text-blue-500/80">00_Resilience_Command_Center</span>
+                  <div className="h-px flex-1 bg-blue-500/10"></div>
+               </div>
+               <SRECommandCenter adminKey={adminKey} />
+            </section>
 
              {/* CATEGORY 1: VIGILANCIA DE SEGURIDAD (Métricas) */}
              <section className="space-y-8">
