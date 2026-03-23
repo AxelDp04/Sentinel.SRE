@@ -1,0 +1,8 @@
+# Ignorar la carpeta de Sentinel durante la construcción del Backend en Railway
+# Esto evita que Nixpacks detecte variables de Twilio innecesarias
+apps/sentinel
+apps/agentscout
+.git
+venv
+tmp
+node_modules
