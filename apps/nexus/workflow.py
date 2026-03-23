@@ -149,9 +149,14 @@ def action_node(state: NexusState):
         if "column" in error_desc:
              state["resolution_steps"].append("WhatsApp: 📍 ALERTA DE ESTRUCTURA: FALLO DE INTEGRIDAD EN AUDITACAR.")
     elif project == "ARQOVEX":
-        state["resolution_steps"].append("Isolation: Modo Centinela Silencioso activado para ARQOVEX.")
-        state["action_executed"] = "SILENT_MONITOR_SYNC"
-        state["resolution_steps"].append(f"Action Engine: Sincronizando telemetría de Supabase ({arqovex_target[:15]}...)")
+        state["resolution_steps"].append(f"Isolation: Arqovex Engine Detected ({arqovex_target[:15]}...)")
+        if "saturation" in error_desc.lower() or "connection" in error_desc.lower():
+            state["action_executed"] = "SUPABASE_POOL_CLEANUP"
+            state["resolution_steps"].append("Action Engine: Detectada saturación de conexiones en Arqovex.")
+            state["resolution_steps"].append("Action Engine: Ejecutando purga selectiva de sesiones inactivas en Supabase...")
+        else:
+            state["action_executed"] = "SILENT_MONITOR_SYNC"
+            state["resolution_steps"].append("Action Engine: Sincronizando telemetría en Modo Pasivo.")
     elif project == "AGENTSCOUT":
         state["resolution_steps"].append("Isolation: Modo Centinela Silencioso activado para AgentScout.")
         state["action_executed"] = "SILENT_MONITOR_SYNC"
