@@ -15,6 +15,7 @@ import { NexusLiveMonitor } from "@/components/ui/NexusLiveMonitor";
 import { SheriffPanel } from "@/components/ui/SheriffPanel";
 import { MobileNavBar } from "@/components/layout/MobileNavBar";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
+import { SheriffControl } from "@/components/ui/SheriffControl";
 import { supabase } from "@/lib/supabase";
 
 export default function Home() {
@@ -209,6 +210,9 @@ export default function Home() {
       
       {/* Tactical Mobile Navigation */}
       <MobileNavBar onToggleSafeMode={setIsSafeMode} isSafeMode={isSafeMode} />
+      
+      {/* Nexus SRE Co-Pilot (The Sheriff) */}
+      <SheriffControl />
     </main>
   );
 }
