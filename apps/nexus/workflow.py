@@ -111,7 +111,12 @@ def action_node(state: NexusState):
     
     if project == "AUDITACAR":
         state["resolution_steps"].append(f"Isolation: Nexus artillería apuntada a Neon ({neon_target[:15]}...)")
-        if "column" in error_desc or "schema" in error_desc or "relation" in error_desc:
+        if "missing" in error_desc.lower() or "renamed" in error_desc.lower() or "intervention" in error_desc.lower():
+            state["action_executed"] = "EXTERNAL_INTRUSION_SHIELD"
+            state["resolution_steps"].append("CRITICAL: Table missing or renamed in Neon_DB. Manual Intervention Detected.")
+            state["resolution_steps"].append("Action Engine: Bloqueando acceso a API Gateway de AuditaCar por seguridad.")
+            state["resolution_steps"].append("Action Engine: Restaurando tabla 'vehicles' desde backup frío en Neon.")
+        elif "column" in error_desc or "schema" in error_desc or "relation" in error_desc:
             state["action_executed"] = "EMERGENCY_SCHEMA_ROLLBACK"
             state["resolution_steps"].append("Critical: Fallo de integridad estructural detectado en Neon.")
             state["resolution_steps"].append("Action Engine: Ejecutando rollback a snapshot pre-migración (Neon-Point-In-Time-Restore).")

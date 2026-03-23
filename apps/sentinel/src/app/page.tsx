@@ -61,9 +61,13 @@ export default function Home() {
         const isNexusBusy = activeProjectNames.includes(p.id.toLowerCase());
         const real = realHealth[p.id.toLowerCase()] || { status: 'online', latency: 25 };
         
+        // El logo se pone rojo si Nexus está ocupado O si hay un fallo de integridad
+        const isDown = isNexusBusy || real.status === 'offline' || real.status === 'integrity_failure';
+        
         health[p.id] = {
-           status: isNexusBusy ? 'offline' : real.status,
-           latency: isNexusBusy ? 999 : real.latency
+           status: isDown ? 'offline' : 'online',
+           latency: isNexusBusy ? 999 : real.latency,
+           integrityFailure: real.status === 'integrity_failure'
         };
       });
       setHealthData(health);

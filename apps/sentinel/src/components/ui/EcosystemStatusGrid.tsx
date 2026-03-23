@@ -5,7 +5,7 @@ import { ShieldCheck, ShieldAlert, Activity, Globe } from "lucide-react";
 import { PROJECTS } from "@/constants/projects";
 
 interface EcosystemStatusGridProps {
-  healthData?: Record<string, { status: string; latency?: number }>;
+  healthData?: Record<string, { status: string; latency?: number; integrityFailure?: boolean }>;
 }
 
 export const EcosystemStatusGrid = ({ healthData = {} }: EcosystemStatusGridProps) => {
@@ -37,8 +37,10 @@ export const EcosystemStatusGrid = ({ healthData = {} }: EcosystemStatusGridProp
                   {project.url.replace('https://', '')}
                 </p>
               </div>
-              <div className={`p-3 rounded-xl ${isOnline ? 'bg-emerald-500/10' : 'bg-red-500/10'} border border-white/5`}>
-                {isOnline ? (
+              <div className={`p-3 rounded-xl ${data.integrityFailure ? 'bg-orange-500/10 border-orange-500/20' : isOnline ? 'bg-emerald-500/10' : 'bg-red-500/10'} border border-white/5`}>
+                {data.integrityFailure ? (
+                  <ShieldAlert className="w-6 h-6 text-orange-500 animate-[pulse_1s_infinite]" />
+                ) : isOnline ? (
                   <ShieldCheck className="w-6 h-6 text-emerald-500" />
                 ) : (
                   <ShieldAlert className="w-6 h-6 text-red-500 animate-pulse" />
@@ -51,8 +53,8 @@ export const EcosystemStatusGrid = ({ healthData = {} }: EcosystemStatusGridProp
                 <p className="text-[9px] text-slate-600 uppercase font-black tracking-[0.2em]">Node_State</p>
                 <div className="flex items-center gap-2">
                   <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.6)]' : 'bg-red-500'}`} />
-                  <span className={`text-[11px] font-black uppercase tracking-tighter ${isOnline ? 'text-emerald-400' : 'text-red-400'}`}>
-                    {isOnline ? 'Active' : 'Offline'}
+                  <span className={`text-[11px] font-black uppercase tracking-tighter ${data.integrityFailure ? 'text-orange-400' : isOnline ? 'text-emerald-400' : 'text-red-400'}`}>
+                    {data.integrityFailure ? 'Integrity Failure' : isOnline ? 'Active' : 'Offline'}
                   </span>
                 </div>
               </div>

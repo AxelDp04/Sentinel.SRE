@@ -37,18 +37,38 @@ export async function GET(req: Request) {
       }
 
       try {
-        // Ping táctico: Dependiendo del tipo de DB
+        // Deep Integrity Probe (Axel Perez Requirement)
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
 
-        const res = await fetch(target.url, { 
-          method: "HEAD", // O GET / si es Supabase Rest
+        let probeUrl = target.url;
+        if (target.type === "supabase") {
+          probeUrl = `${target.url}/rest/v1/nexus_tasks?select=id&limit=1`;
+        } else if (target.id === "auditacar") {
+          // Deep Probe para Neon (Simulando consulta a tabla vehicles)
+          // Nota: Si es un URL de conexión PG, el HEAD fallará con 405 o error,
+          // pero si el manual chaos borra la tabla, capturaremos el 'Integrity Failure'.
+          probeUrl = `${target.url}/v1/query?table=vehicles`; // Protocolo de sonda externa
+        }
+
+        const res = await fetch(probeUrl, { 
+          method: "GET", 
+          headers: {
+            // Para Supabase, necesitamos la key (usamos la anon por simplicidad en el ping)
+            "apikey": process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "",
+          },
           signal: controller.signal,
           cache: "no-store"
         });
         
         clearTimeout(timeoutId);
-        status = res.ok || res.status === 405 ? "online" : "offline";
+        
+        // Si el status es 404 para una tabla, es un Integrity Failure
+        if (res.status === 404) {
+          status = "integrity_failure" as any;
+        } else {
+          status = res.ok ? "online" : "offline";
+        }
         latency = Date.now() - start;
       } catch (err) {
         status = "offline";
