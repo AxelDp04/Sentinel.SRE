@@ -5,8 +5,21 @@ from contextlib import asynccontextmanager
 from database import get_pending_tasks, update_task_status, append_resolution_step, update_task_resolved, supabase
 from workflow import nexus_workflow
 
-# Polling task flag
+# Polling task flags
 is_polling = False
+is_worker_running = False
+
+async def start_job_worker():
+    """Starts the distributed job worker in the background."""
+    global is_worker_running
+    from job_worker import poll_nexus_jobs
+    import threading
+    
+    if not is_worker_running:
+        is_worker_running = True
+        print("[*] Nexus Engine: Lanzando Distributed Job Worker en segundo plano...")
+        thread = threading.Thread(target=poll_nexus_jobs, daemon=True)
+        thread.start()
 
 async def poll_supabase():
     global is_polling
@@ -118,6 +131,7 @@ async def lifespan(app: FastAPI):
         print(f"💥 VIGILANTE STARTUP EXCEPTION: {startup_err}")
 
     asyncio.create_task(poll_supabase())
+    await start_job_worker() # Start the job processing engine
     yield
     is_polling = False
 

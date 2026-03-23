@@ -17,6 +17,7 @@ import { MobileNavBar } from "@/components/layout/MobileNavBar";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { SheriffControl } from "@/components/ui/SheriffControl";
 import { SRECommandCenter } from "@/components/ui/SRECommandCenter";
+import { JobDashboard } from "@/components/ui/JobDashboard";
 import { supabase } from "@/lib/supabase";
 
 export default function Home() {
@@ -139,10 +140,19 @@ export default function Home() {
                <SRECommandCenter adminKey={adminKey} />
             </section>
 
-             {/* CATEGORY 1: VIGILANCIA DE SEGURIDAD (Métricas) */}
+            {/* CATEGORY 1: JOBS EXECUTION QUEUE (ENTERPRISE AUTOMATION) */}
+            <section className="space-y-8 animate-in slide-in-from-left duration-1000 delay-500">
+               <div className="flex items-center gap-6">
+                  <span className="text-[11px] font-black uppercase tracking-[0.5em] text-amber-500/50">01_Jobs_Background_Queue</span>
+                  <div className="h-px flex-1 bg-white/5"></div>
+               </div>
+               <JobDashboard adminKey={adminKey} />
+            </section>
+
+             {/* CATEGORY 2: VIGILANCIA DE SEGURIDAD (Métricas) */}
              <section className="space-y-8">
                 <div className="flex items-center gap-6">
-                   <span className="text-[11px] font-black uppercase tracking-[0.5em] text-slate-700">01_Security_Vigilance</span>
+                   <span className="text-[11px] font-black uppercase tracking-[0.5em] text-slate-700">02_Security_Vigilance</span>
                    <div className="h-px flex-1 bg-white/5"></div>
                 </div>
                 <ErrorBoundary>

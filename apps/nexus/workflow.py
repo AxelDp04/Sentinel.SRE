@@ -157,6 +157,16 @@ def action_node(state: NexusState):
         else:
             state["action_executed"] = "SILENT_MONITOR_SYNC"
             state["resolution_steps"].append("Action Engine: Sincronizando telemetría en Modo Pasivo.")
+    elif project == "NEXUS_JOBS":
+        state["resolution_steps"].append("Isolation: Distributed Job Engine (Queue: nexus_jobs)")
+        if "CRITICAL_JOB_FAILURE" in error_desc:
+            state["action_executed"] = "JOB_RESET & CACHE_PURGE"
+            state["resolution_steps"].append("Action Engine: Detectado fallo crítico en cola de Jobs.")
+            state["resolution_steps"].append("Action Engine: Limpiando caché local del Worker y reseteando estado de Job.")
+            state["resolution_steps"].append("Action Engine: Job re-encolado exitosamente para ejecución posterior.")
+        else:
+            state["action_executed"] = "GENERIC_JOB_RETRY"
+            state["resolution_steps"].append("Action Engine: Re-intentando tarea de fondo...");
     elif project == "AGENTSCOUT":
         state["resolution_steps"].append("Isolation: Modo Centinela Silencioso activado para AgentScout.")
         state["action_executed"] = "SILENT_MONITOR_SYNC"
