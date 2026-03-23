@@ -8,3 +8,4 @@ pydantic
 python-dotenv
 asyncio
 requests
+psycopg2-binary

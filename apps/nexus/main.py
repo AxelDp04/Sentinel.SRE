@@ -136,7 +136,6 @@ async def break_system():
     print("\n🎬 [DEMO] Disparando Endpoint de Sacrificio...")
     
     # Inyectar una tarea directamente en DB (Simulando el error del sistema)
-    from database import supabase
     if not supabase:
         return {"error": "DB no conectada."}
 

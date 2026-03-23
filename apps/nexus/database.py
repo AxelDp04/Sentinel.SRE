@@ -13,7 +13,6 @@ supabase: Client = None
 
 if not SUPABASE_URL or not SUPABASE_KEY:
     print(f"⚠️ WARNING: Supabase credentials NOT found in environment.")
-    print(f"DEBUG -> URL: {'OK' if SUPABASE_URL else 'MISSING'}, KEY: {'OK' if SUPABASE_KEY else 'MISSING'}")
 else:
     try:
         supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
@@ -23,10 +22,8 @@ else:
 
 def get_pending_tasks():
     if not supabase: 
-        print("⚠️ database.py: Supabase client NOT initialized.")
         return []
     try:
-        # Filtro estricto en minúsculas como pidió Axel
         response = supabase.table("nexus_tasks").select("*").eq("status", "pending").execute()
         return response.data
     except Exception as e:
@@ -44,13 +41,10 @@ def update_task_status(task_id: str, status: str):
 def append_resolution_step(task_id: str, step: str):
     if not supabase: return
     try:
-        # Fetch current steps
         task_res = supabase.table("nexus_tasks").select("resolution_steps").eq("id", task_id).execute()
         if not task_res.data: return
         current_steps = task_res.data[0].get("resolution_steps") or []
         current_steps.append(step)
-        
-        # Update with new step
         supabase.table("nexus_tasks").update({"resolution_steps": current_steps}).eq("id", task_id).execute()
     except Exception as e:
         print(f"Error appending step: {e}")
