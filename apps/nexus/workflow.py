@@ -7,22 +7,49 @@ from dotenv import load_dotenv
 from database import supabase # Importamos el cliente de DB para acciones directas
 load_dotenv()
 
-# Prioritize Groq for stable Tier 4 operations
-USE_GROQ = os.getenv("GROQ_API_KEY") is not None
-MODEL_NAME = os.getenv("MODEL_NAME")
+# --- CONFIGURACIÓN DE INTELIGENCIA (RESILIENCIA TOTAL) ---
+# Intentamos cargar ambos proveedores para tener redundancia.
 
-if USE_GROQ:
+# 1. Configuración de Groq (Primario por velocidad SRE)
+GROQ_KEY = os.getenv("GROQ_API_KEY")
+MODEL_GROQ = os.getenv("MODEL_NAME") or "llama-3.1-8b-instant"
+groq_llm = None
+if GROQ_KEY:
     from langchain_groq import ChatGroq
-    effective_model = MODEL_NAME or "llama-3.1-8b-instant"
-    llm = ChatGroq(model=effective_model, temperature=0.3)
-    print(f"[*] Nexus Engine using Groq Model (Stable): {effective_model}")
-elif os.getenv("GEMINI_API_KEY"):
+    groq_llm = ChatGroq(model=MODEL_GROQ, temperature=0.3)
+    print(f"[*] Brain A (Groq) cargado: {MODEL_GROQ}")
+
+# 2. Configuración de Gemini (Secundario/Respaldo confiable)
+GEMINI_KEY = os.getenv("GEMINI_API_KEY")
+MODEL_GEMINI = "gemini-1.5-flash"
+gemini_llm = None
+if GEMINI_KEY:
     from langchain_google_genai import ChatGoogleGenerativeAI
-    effective_model = MODEL_NAME or "gemini-1.5-flash"
-    llm = ChatGoogleGenerativeAI(model=effective_model, temperature=0.3)
-    print(f"[*] Nexus Engine using Gemini Model (Fallback): {effective_model}")
-else:
-    raise ValueError("❌ Error: No se detectó ni GROQ_API_KEY ni GEMINI_API_KEY.")
+    gemini_llm = ChatGoogleGenerativeAI(model=MODEL_GEMINI, temperature=0.3)
+    print(f"[*] Brain B (Gemini) cargado: {MODEL_GEMINI}")
+
+def safe_llm_invoke(messages):
+    """
+    --- EXPLICACIÓN EDUCATIVA: PROTOCOLO DE RESILIENCIA ---
+    Esta función es el 'corazón' de la redundancia. Si el cerebro A (Groq)
+    falla por límites de tokens (Error 429), salta automáticamente al 
+    cerebro B (Gemini) sin detener la operación.
+    """
+    # Intentamos con Groq primero
+    if groq_llm:
+        try:
+            return groq_llm.invoke(messages)
+        except Exception as e:
+            if "429" in str(e) or "rate_limit" in str(e).lower():
+                print(f"⚠️ [RESILIENCE] Groq alcanzó su límite. Activando Brain B (Gemini)...")
+            else:
+                print(f"⚠️ [RESILIENCE] Fallo inesperado en Groq: {e}. Saltando a respaldo...")
+    
+    # Fallback a Gemini si Groq falló o no está disponible
+    if gemini_llm:
+        return gemini_llm.invoke(messages)
+    
+    raise ValueError("❌ Error Crítico: Ningún proveedor de IA está disponible o funcional.")
 
 class NexusState(TypedDict):
     task_id: str
@@ -51,9 +78,9 @@ def language_detector(state: NexusState):
     # default to 'es' but check for 'en'
     state["language"] = "en" if any(kw in text for kw in en_keywords) and not any(kw in text for kw in es_keywords) else "es"
     
-    # If ambiguous, use LLM for 1-token check
+    # Redundancia: Usamos el invoke seguro
     prompt = f"Detect language (respond only 'en' or 'es'): {state['error_description']}"
-    res = llm.invoke([HumanMessage(content=prompt)])
+    res = safe_llm_invoke([HumanMessage(content=prompt)])
     state["language"] = res.content.strip().lower()[:2]
     
     print(f"[*] Language Detected: {state['language']}")
@@ -117,7 +144,7 @@ def sre_agent(state: NexusState):
         HumanMessage(content=human_prompts.get(lang))
     ]
     
-    response = llm.invoke(messages)
+    response = safe_llm_invoke(messages)
     state["proposed_solution"] = response.content
     
     step = "SRE Agent: Analizó el riesgo/error y propuso solución." if lang == "es" else "SRE Agent: Analyzed risk/error and proposed solution."
@@ -144,7 +171,7 @@ def security_agent(state: NexusState):
         HumanMessage(content=human_prompts.get(lang))
     ]
     
-    response = llm.invoke(messages)
+    response = safe_llm_invoke(messages)
     result = response.content.strip()
     
     if result.startswith("APPROVED"):

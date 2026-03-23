@@ -65,9 +65,8 @@ export async function POST(req: Request) {
     if (!GROQ_KEY) {
       return NextResponse.json({ response: "Sheriff Offline: Falta GROQ_API_KEY." });
     }
-
     try {
-      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      let response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${GROQ_KEY}`,
@@ -84,15 +83,37 @@ export async function POST(req: Request) {
         })
       });
 
-      if (!response.ok) {
+      let aiResult;
+      let sheriffResponse = "";
+
+      // --- PROTOCOLO DE RESILIENCIA: FALLBACK A GEMINI ---
+      if (!response.ok && response.status === 429 && process.env.GEMINI_API_KEY) {
+        console.warn("⚠️ [RESILIENCE] Groq 429 detectado. Activando Respaldo Gemini...");
+        
+        const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: `${systemContext}\n\nUser: ${message}` }] }]
+          })
+        });
+
+        if (geminiRes.ok) {
+          const geminiData = await geminiRes.json();
+          sheriffResponse = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || "Nexus experimenta una latencia profunda. Reintenta Axel.";
+          console.log("✅ [RESILIENCE] Respuesta recuperada vía Gemini.");
+        } else {
+          return NextResponse.json({ response: "Nexus SRE: Ambos cerebros (Groq/Gemini) están agotados o inaccesibles." });
+        }
+      } else if (!response.ok) {
         const errorData = await response.json();
         return NextResponse.json({ 
           response: `Nexus SRE Sheriff: Error de Groq (HTTP ${response.status}). Detalle: ${JSON.stringify(errorData.error || errorData)}` 
         });
+      } else {
+        aiResult = await response.json();
+        sheriffResponse = aiResult.choices[0].message.content || "Lo siento Axel, mi conexión con el núcleo de Nexus está experimentando latencia. Intenta de nuevo.";
       }
-
-      const aiResult = await response.json();
-      let sheriffResponse = aiResult.choices[0].message.content || "Lo siento Axel, mi conexión con el núcleo de Nexus está experimentando latencia. Intenta de nuevo.";
 
       // 4. Procesamiento de Acciones (The Sheriff's Hands)
       if (sheriffResponse.includes("[[ACTION:CLEAR_LOGS]]")) {
