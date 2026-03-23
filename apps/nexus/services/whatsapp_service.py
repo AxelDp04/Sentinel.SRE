@@ -9,8 +9,9 @@ def send_report_to_vercel(project_name: str, error_description: str, solution: s
     print(f"\n[TRIGGER] Enviando reporte a Vercel para el proyecto: {project_name}")
 
     # Fallback de URLs y Keys
-    sentinel_url = os.getenv("SENTINEL_API_URL") or os.getenv("NEXT_PUBLIC_SITE_URL") or "https://sentinel-dashboard.vercel.app"
-    admin_key = os.getenv("ADMIN_KEY") or "AxelDp04"
+    # Corrected Production URL for Axel Perez
+    sentinel_url = os.getenv("SENTINEL_API_URL") or os.getenv("NEXT_PUBLIC_SITE_URL") or "https://nexus-sentinel.vercel.app"
+    admin_key = os.getenv("ADMIN_KEY") or os.getenv("NEXT_PUBLIC_ADMIN_KEY") or "AxelDp04"
 
     payload = {
         "isNexusReport": True,
