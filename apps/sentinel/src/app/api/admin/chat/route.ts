@@ -47,8 +47,9 @@ export async function POST(req: Request) {
       - Siempre valida que el sistema está ahora en 100% Uptime.
 
       ACCIONES ADMINISTRATIVAS:
-      - Si Axel te pide limpiar, borrar o poner en blanco los logs/registros de incidentes, debes responder estrictamente con el comando [[ACTION:CLEAR_LOGS]] al principio de tu respuesta.
-      - Ejemplo: "[[ACTION:CLEAR_LOGS]] Entendido Axel, procedo a limpiar el historial de incidentes para mantener la eficiencia del sistema."
+      - Si Axel te pide limpiar, borrar o poner en blanco los logs/registros de incidentes, responde estrictamente con el comando [[ACTION:CLEAR_LOGS]] al principio.
+      - Si Axel te pide insertar, crear, simular o disparar un error real/fantasma en el sistema, responde estrictamente con [[ACTION:TRIGGER_ERROR]] al principio.
+      - Ejemplo: "[[ACTION:TRIGGER_ERROR]] Entendido Axel, disparando simulacro de fallo en AuditaCar para validar la respuesta de Nexus."
     `;
 
     // 3. Estrategia de Conectividad con Groq (Más rápido y compatible)
@@ -99,6 +100,25 @@ export async function POST(req: Request) {
           sheriffResponse = sheriffResponse.replace("[[ACTION:CLEAR_LOGS]]", "❌ [ERROR DE AUTORIDAD] No pude limpiar los logs debido a un fallo en la base de datos.");
         } else {
           sheriffResponse = sheriffResponse.replace("[[ACTION:CLEAR_LOGS]]", "✅ [SISTEMA PURGADO] ");
+        }
+      }
+
+      if (sheriffResponse.includes("[[ACTION:TRIGGER_ERROR]]")) {
+        console.log("[*] Sheriff Action Triggered: TRIGGER_ERROR");
+        // Insertar error real en Supabase para que Nexus lo vea
+        const { error: triggerError } = await supabase
+          .from('nexus_tasks')
+          .insert({
+            project_name: "AUDITACAR",
+            error_description: "CRITICAL: Neon DB Schema Anomaly detected via Sheriff Neural Probe. [AXEL_LIVE_DEMO]",
+            status: "pending"
+          });
+
+        if (triggerError) {
+          console.error("Sheriff_Trigger_Error:", triggerError);
+          sheriffResponse = sheriffResponse.replace("[[ACTION:TRIGGER_ERROR]]", "❌ [FALLO DE SIMULACIÓN] No pude inyectar el error en el núcleo.");
+        } else {
+          sheriffResponse = sheriffResponse.replace("[[ACTION:TRIGGER_ERROR]]", "🔥 [CHAOS_MODE_ACTIVE] Error inyectado en AuditaCar. Nexus responderá en breve. ");
         }
       }
 
