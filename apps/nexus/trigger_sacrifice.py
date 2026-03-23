@@ -12,12 +12,12 @@ SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
 def trigger_sacrifice():
     print("\n🎬 [DEMO] Disparando Trigger de Sacrificio directo a Supabase...")
     
-    # Payload para el Primer Sacrificio Crítico de AUDITACAR (Neon)
+    # Payload para el Segundo Sacrificio (Nivel Corporativo - Integridad)
     error_data = {
         "project_name": "AUDITACAR",
-        "error_description": "FATAL: connection limit exceeded for database 'auditacar_db'. Neon_Compute exhausted at 100% capacity.",
+        "error_description": "ERROR: column 'vehicle_uuid' does not exist in table 'vehicle_logs'. Structural Integrity Failure during Red-Green Deployment.",
         "status": "pending",
-        "resolution_steps": ["Sentinel: Núcleo de Neon 'ahogado' por exceso de conexiones. Transfiriendo mando a Nexus."]
+        "resolution_steps": ["Sentinel: Fallo de integridad en AuditaCar detected. Initiating Critical Schema Audit."]
     }
 
     url = f"{SUPABASE_URL}/rest/v1/nexus_tasks"

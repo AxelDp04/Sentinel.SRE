@@ -111,7 +111,12 @@ def action_node(state: NexusState):
     
     if project == "AUDITACAR":
         state["resolution_steps"].append(f"Isolation: Nexus artillería apuntada a Neon ({neon_target[:15]}...)")
-        if "connection limit" in error_desc or "pool exhausted" in error_desc:
+        if "column" in error_desc or "schema" in error_desc or "relation" in error_desc:
+            state["action_executed"] = "EMERGENCY_SCHEMA_ROLLBACK"
+            state["resolution_steps"].append("Critical: Fallo de integridad estructural detectado en Neon.")
+            state["resolution_steps"].append("Action Engine: Ejecutando rollback a snapshot pre-migración (Neon-Point-In-Time-Restore).")
+            state["resolution_steps"].append("Action Engine: Estructura de tablas restaurada exitosamente.")
+        elif "connection limit" in error_desc or "pool exhausted" in error_desc:
             state["action_executed"] = "CLEAN_CONNECTION_POOL & API_RECONNECT"
             state["resolution_steps"].append("Action Engine: Purgando pool de conexiones en Neon...")
             state["resolution_steps"].append("Action Engine: Re-estableciendo sesión de base de datos...")
@@ -124,6 +129,10 @@ def action_node(state: NexusState):
         else:
             state["action_executed"] = "RETRY_STRATEGY"
             state["resolution_steps"].append("Action Engine: Iniciando RETRY_STRATEGY para AuditaCar.")
+        
+        # WhatsApp Tier 4 Override for Integrity
+        if "column" in error_desc:
+             state["resolution_steps"].append("WhatsApp: 📍 ALERTA DE ESTRUCTURA: FALLO DE INTEGRIDAD EN AUDITACAR.")
     elif project == "ARQOVEX":
         state["resolution_steps"].append("Isolation: Modo Centinela Silencioso activado para ARQOVEX.")
         state["action_executed"] = "SILENT_MONITOR_SYNC"
