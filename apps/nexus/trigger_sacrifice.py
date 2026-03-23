@@ -12,12 +12,12 @@ SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
 def trigger_sacrifice():
     print("\n🎬 [DEMO] Disparando Trigger de Sacrificio directo a Supabase...")
     
-    # Payload para la demo de AUDITACAR
+    # Payload para el Primer Sacrificio Crítico de AUDITACAR (Neon)
     error_data = {
         "project_name": "AUDITACAR",
-        "error_description": "CRITICAL: API Gateway Authentication Timeout in AuditaCar_Compute. (Simulating API_RECONNECT)",
+        "error_description": "FATAL: connection limit exceeded for database 'auditacar_db'. Neon_Compute exhausted at 100% capacity.",
         "status": "pending",
-        "resolution_steps": ["Sentinel: Sistema AUDITACAR colapsado. Delegando control a Nexus."]
+        "resolution_steps": ["Sentinel: Núcleo de Neon 'ahogado' por exceso de conexiones. Transfiriendo mando a Nexus."]
     }
 
     url = f"{SUPABASE_URL}/rest/v1/nexus_tasks"

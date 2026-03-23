@@ -111,7 +111,11 @@ def action_node(state: NexusState):
     
     if project == "AUDITACAR":
         state["resolution_steps"].append(f"Isolation: Nexus artillería apuntada a Neon ({neon_target[:15]}...)")
-        if "api" in error_desc or "gateway" in error_desc:
+        if "connection limit" in error_desc or "pool exhausted" in error_desc:
+            state["action_executed"] = "CLEAN_CONNECTION_POOL & API_RECONNECT"
+            state["resolution_steps"].append("Action Engine: Purgando pool de conexiones en Neon...")
+            state["resolution_steps"].append("Action Engine: Re-estableciendo sesión de base de datos...")
+        elif "api" in error_desc or "gateway" in error_desc:
             state["action_executed"] = "API_RECONNECT"
             state["resolution_steps"].append("Action Engine: Re-sincronizando API Gateway de AuditaCar...")
         elif "db" in error_desc or "database" in error_desc or "pool" in error_desc:
