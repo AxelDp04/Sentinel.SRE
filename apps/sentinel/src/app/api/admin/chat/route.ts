@@ -47,55 +47,46 @@ export async function POST(req: Request) {
       - Siempre valida que el sistema está ahora en 100% Uptime.
     `;
 
-    // 3. Estrategia de Conectividad Resiliente (Multi-Model Fallback)
-    const GEMINI_KEY = process.env.GEMINI_API_KEY;
-    if (!GEMINI_KEY) {
-      return NextResponse.json({ response: "Sheriff Offline: Falta GEMINI_API_KEY." });
+    // 3. Estrategia de Conectividad con Groq (Más rápido y compatible)
+    const GROQ_KEY = process.env.GROQ_API_KEY;
+    if (!GROQ_KEY) {
+      return NextResponse.json({ response: "Sheriff Offline: Falta GROQ_API_KEY." });
     }
 
-    const modelsToTry = [
-      "gemini-1.5-flash",
-      "gemini-1.5-flash-latest",
-      "gemini-1.5-pro",
-      "gemini-pro"
-    ];
-
-    let aiResult = null;
-    let lastError = null;
-
-    for (const model of modelsToTry) {
-      try {
-        console.log(`[*] Intentando con modelo: ${model}`);
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_KEY}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: `${systemContext}\n\nUsuario: ${message}` }] }]
-          })
-        });
-
-        if (response.ok) {
-          aiResult = await response.json();
-          break; // ¡Éxito!
-        } else {
-          lastError = await response.json();
-          console.warn(`[-] Fallo con ${model}:`, lastError);
-        }
-      } catch (err) {
-        console.error(`[!] Error de red con ${model}:`, err);
-      }
-    }
-
-    if (!aiResult) {
-      return NextResponse.json({ 
-        response: `Nexus SRE Sheriff: Agotados todos los modelos. Último Error: ${JSON.stringify(lastError?.error || lastError)}` 
+    try {
+      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${GROQ_KEY}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: "llama-3.3-70b-versatile",
+          messages: [
+            { role: "system", content: systemContext },
+            { role: "user", content: message }
+          ],
+          temperature: 0.7,
+          max_tokens: 500
+        })
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        return NextResponse.json({ 
+          response: `Nexus SRE Sheriff: Error de Groq (HTTP ${response.status}). Detalle: ${JSON.stringify(errorData.error || errorData)}` 
+        });
+      }
+
+      const aiResult = await response.json();
+      const sheriffResponse = aiResult.choices[0].message.content || "Lo siento Axel, mi conexión con el núcleo de Nexus está experimentando latencia. Intenta de nuevo.";
+
+      return NextResponse.json({ response: sheriffResponse });
+
+    } catch (err) {
+      console.error("[!] Error de red con Groq:", err);
+      return NextResponse.json({ response: "Nexus SRE Sheriff: Fallo crítico de red con el núcleo de Groq." });
     }
-
-    const aiText = aiResult.candidates?.[0]?.content?.parts?.[0]?.text;
-    const sheriffResponse = aiText || "Lo siento Axel, mi conexión con el núcleo de Nexus está experimentando latencia. Intenta de nuevo.";
-
-    return NextResponse.json({ response: sheriffResponse });
 
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
