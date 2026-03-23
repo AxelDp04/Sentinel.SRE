@@ -78,7 +78,26 @@ export async function GET(req: Request) {
       health[target.id] = { status, latency };
     }));
 
-    return NextResponse.json({ health });
+    return new NextResponse(
+      JSON.stringify({ 
+        health,
+        timestamp: new Date().toISOString(),
+        probes: "Deep_Integrity_v2",
+        cache_bypass: "aggressive-shield"
+      }),
+      {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+          'Surrogate-Control': 'no-store',
+          'Vercel-CDN-Cache-Control': 'no-store',
+          'x-sentinel-probe': 'aggressive-bypass'
+        }
+      }
+    );
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
