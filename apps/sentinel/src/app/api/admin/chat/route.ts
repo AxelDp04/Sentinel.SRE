@@ -45,6 +45,10 @@ export async function POST(req: Request) {
       - Explica cómo Nexus detectó y reparó cada fallo (Ej: Supabase Pool Cleanup, Intrusion Shield).
       - Eres serio, técnico, usas emojis tácticos (🛰️, 🦾, 🏁) y respondes con autoridad SRE.
       - Siempre valida que el sistema está ahora en 100% Uptime.
+
+      ACCIONES ADMINISTRATIVAS:
+      - Si Axel te pide limpiar, borrar o poner en blanco los logs/registros de incidentes, debes responder estrictamente con el comando [[ACTION:CLEAR_LOGS]] al principio de tu respuesta.
+      - Ejemplo: "[[ACTION:CLEAR_LOGS]] Entendido Axel, procedo a limpiar el historial de incidentes para mantener la eficiencia del sistema."
     `;
 
     // 3. Estrategia de Conectividad con Groq (Más rápido y compatible)
@@ -79,7 +83,24 @@ export async function POST(req: Request) {
       }
 
       const aiResult = await response.json();
-      const sheriffResponse = aiResult.choices[0].message.content || "Lo siento Axel, mi conexión con el núcleo de Nexus está experimentando latencia. Intenta de nuevo.";
+      let sheriffResponse = aiResult.choices[0].message.content || "Lo siento Axel, mi conexión con el núcleo de Nexus está experimentando latencia. Intenta de nuevo.";
+
+      // 4. Procesamiento de Acciones (The Sheriff's Hands)
+      if (sheriffResponse.includes("[[ACTION:CLEAR_LOGS]]")) {
+        console.log("[*] Sheriff Action Triggered: CLEAR_LOGS");
+        // Ejecutar limpieza real en Supabase
+        const { error: clearError } = await supabase
+          .from('nexus_tasks')
+          .delete()
+          .neq('id', "00000000-0000-0000-0000-000000000000"); // Borrar todo lo que no sea un UUID inexistente
+
+        if (clearError) {
+          console.error("Sheriff_Action_Error:", clearError);
+          sheriffResponse = sheriffResponse.replace("[[ACTION:CLEAR_LOGS]]", "❌ [ERROR DE AUTORIDAD] No pude limpiar los logs debido a un fallo en la base de datos.");
+        } else {
+          sheriffResponse = sheriffResponse.replace("[[ACTION:CLEAR_LOGS]]", "✅ [SISTEMA PURGADO] ");
+        }
+      }
 
       return NextResponse.json({ response: sheriffResponse });
 
