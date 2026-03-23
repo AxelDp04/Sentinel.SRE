@@ -1,61 +1,91 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { 
   LayoutDashboard, 
-  Shield, 
+  Activity,
+  BriefcaseBusiness,
+  Shield,
   Lock, 
   Unlock,
-  Bot
 } from "lucide-react";
 
 interface MobileNavBarProps {
   onToggleSafeMode: (val: boolean) => void;
   isSafeMode: boolean;
+  onTabChange?: (tab: string) => void;
 }
 
-export const MobileNavBar = ({ onToggleSafeMode, isSafeMode }: MobileNavBarProps) => {
+const TABS = [
+  { id: "dashboard", icon: LayoutDashboard, label: "Hub" },
+  { id: "monitor",   icon: Activity,         label: "Monitor" },
+  { id: "jobs",      icon: BriefcaseBusiness, label: "Jobs" },
+  { id: "sre",       icon: Shield,            label: "SRE" },
+];
+
+export const MobileNavBar = ({ onToggleSafeMode, isSafeMode, onTabChange }: MobileNavBarProps) => {
+  const [activeTab, setActiveTab] = useState("dashboard");
+  const [pressed, setPressed] = useState<string | null>(null);
+
+  const handleTab = (id: string) => {
+    setActiveTab(id);
+    onTabChange?.(id);
+    setPressed(id);
+    setTimeout(() => setPressed(null), 150);
+    // Scroll to section
+    const el = document.getElementById(`section-${id}`);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   return (
-    <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] w-[90%] max-w-sm">
-      <div className="glass bg-[#0a0f1d]/80 backdrop-blur-2xl border border-white/10 rounded-full p-2 flex items-center justify-between shadow-[0_10px_40px_rgba(0,0,0,0.5)]">
+    <nav
+      className="md:hidden fixed bottom-0 left-0 right-0 z-[100]"
+      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+    >
+      {/* Frosted glass bar */}
+      <div className="bg-[#070d1a]/90 backdrop-blur-2xl border-t border-white/[0.07] px-2 pt-2 pb-1 flex items-center justify-around shadow-[0_-4px_30px_rgba(0,0,0,0.6)]">
         
-        {/* Dash Icon */}
-        <button className="p-3 rounded-full bg-white/5 text-sentinel shadow-[0_0_15px_rgba(16,185,129,0.2)] transition-all">
-          <LayoutDashboard className="w-5 h-5" />
-        </button>
+        {TABS.map(({ id, icon: Icon, label }) => {
+          const isActive = activeTab === id;
+          const isPress = pressed === id;
+          return (
+            <button
+              key={id}
+              onClick={() => handleTab(id)}
+              className="flex-1 flex flex-col items-center gap-0.5 py-1.5 relative group"
+              style={{ transform: isPress ? "scale(0.88)" : "scale(1)", transition: "transform 0.1s ease" }}
+            >
+              {/* Active indicator pill */}
+              {isActive && (
+                <span className="absolute -top-2 left-1/2 -translate-x-1/2 w-6 h-0.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+              )}
+              <div className={`p-1.5 rounded-xl transition-all duration-200 ${isActive ? "bg-emerald-500/15" : "group-active:bg-white/5"}`}>
+                <Icon className={`w-5 h-5 transition-colors duration-200 ${isActive ? "text-emerald-400" : "text-slate-500"}`} strokeWidth={isActive ? 2.5 : 1.5} />
+              </div>
+              <span className={`text-[9px] font-bold uppercase tracking-widest transition-colors duration-200 ${isActive ? "text-emerald-400" : "text-slate-600"}`}>
+                {label}
+              </span>
+            </button>
+          );
+        })}
 
-        {/* Brand / Status */}
-        <div className="flex flex-col items-center">
-           <div className="flex items-center gap-1.5 mb-0.5">
-             <div className={`w-1 h-1 rounded-full ${isSafeMode ? 'bg-slate-500' : 'bg-red-500 animate-pulse'}`} />
-             <span className="text-[8px] font-black uppercase tracking-[0.3em] text-white">Sentinel_Mobile</span>
-           </div>
-           <p className="text-[7px] font-mono text-slate-500 uppercase">Mission_Control_v4.5</p>
-        </div>
-
-        {/* Lock/Unlock Toggle */}
-        <button 
+        {/* Lock/Unlock button */}
+        <button
           onClick={() => onToggleSafeMode(!isSafeMode)}
-          className={`group flex items-center gap-3 px-5 py-2.5 rounded-full transition-all duration-500 ${
-            isSafeMode 
-              ? "bg-slate-800/50 text-slate-400 border border-white/5" 
-              : "bg-red-600 text-white border border-red-500 shadow-[0_0_20px_rgba(220,38,38,0.4)]"
-          }`}
+          className={`flex-1 flex flex-col items-center gap-0.5 py-1.5 transition-all duration-300 active:scale-90`}
         >
-          {isSafeMode ? (
-            <>
-              <Lock className="w-4 h-4" />
-              <span className="text-[9px] font-black uppercase tracking-widest group-active:scale-95 transition-transform">Unlock</span>
-            </>
-          ) : (
-            <>
-              <Unlock className="w-4 h-4" />
-              <span className="text-[9px] font-black uppercase tracking-widest animate-pulse group-active:scale-95 transition-transform">ARMED</span>
-            </>
-          )}
+          <div className={`p-1.5 rounded-xl transition-all duration-300 ${isSafeMode ? "bg-slate-700/30" : "bg-red-500/20 shadow-[0_0_15px_rgba(239,68,68,0.3)]"}`}>
+            {isSafeMode
+              ? <Lock className="w-5 h-5 text-slate-500" strokeWidth={1.5} />
+              : <Unlock className="w-5 h-5 text-red-400 animate-pulse" strokeWidth={2} />
+            }
+          </div>
+          <span className={`text-[9px] font-bold uppercase tracking-widest transition-colors duration-200 ${isSafeMode ? "text-slate-600" : "text-red-400"}`}>
+            {isSafeMode ? "Locked" : "Armed"}
+          </span>
         </button>
 
       </div>
-    </div>
+    </nav>
   );
 };

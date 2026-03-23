@@ -124,7 +124,7 @@ export default function Home() {
         <div className="flex-1 flex flex-col overflow-hidden">
           <Header />
 
-          <div className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-8 space-y-16 sm:space-y-24 animate-in fade-in slide-in-from-bottom-2 duration-1000 max-w-6xl mx-auto w-full">
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-8 pb-28 sm:pb-8 space-y-16 sm:space-y-24 animate-in fade-in slide-in-from-bottom-2 duration-1000 max-w-6xl mx-auto w-full">
             
             {/* VITALITY FLOW MONITOR (ECG PULSE) */}
             <div className="w-full">
@@ -132,7 +132,7 @@ export default function Home() {
             </div>
 
             {/* CATEGORY 0: RESILIENCE COMMAND CENTER (ELITE METRICS) */}
-            <section className="space-y-8 animate-in fade-in zoom-in-95 duration-1000 delay-300">
+            <section id="section-sre" className="space-y-8 animate-in fade-in zoom-in-95 duration-1000 delay-300">
                <div className="flex items-center gap-6">
                   <span className="text-[11px] font-black uppercase tracking-[0.5em] text-blue-500/80">00_Resilience_Command_Center</span>
                   <div className="h-px flex-1 bg-blue-500/10"></div>
@@ -141,7 +141,7 @@ export default function Home() {
             </section>
 
             {/* CATEGORY 1: JOBS EXECUTION QUEUE (ENTERPRISE AUTOMATION) */}
-            <section className="space-y-8 animate-in slide-in-from-left duration-1000 delay-500">
+            <section id="section-jobs" className="space-y-8 animate-in slide-in-from-left duration-1000 delay-500">
                <div className="flex items-center gap-6">
                   <span className="text-[11px] font-black uppercase tracking-[0.5em] text-amber-500/50">01_Jobs_Background_Queue</span>
                   <div className="h-px flex-1 bg-white/5"></div>
@@ -150,7 +150,7 @@ export default function Home() {
             </section>
 
              {/* CATEGORY 2: VIGILANCIA DE SEGURIDAD (Métricas) */}
-             <section className="space-y-8">
+             <section id="section-dashboard" className="space-y-8">
                 <div className="flex items-center gap-6">
                    <span className="text-[11px] font-black uppercase tracking-[0.5em] text-slate-700">02_Security_Vigilance</span>
                    <div className="h-px flex-1 bg-white/5"></div>
@@ -161,7 +161,7 @@ export default function Home() {
              </section>
 
             {/* CATEGORY 2: REGISTRO DE INCIDENTES (EL CORAZÓN - NEXUS) */}
-            <section className="space-y-10 animate-in zoom-in-95 duration-1000">
+            <section id="section-monitor" className="space-y-10 animate-in zoom-in-95 duration-1000">
               <div className="flex flex-col items-center gap-4 mb-10">
                 <div className="h-12 w-px bg-gradient-to-b from-transparent to-blue-500/50" />
                 <span className="text-[12px] font-black uppercase tracking-[0.8em] text-blue-500/80">Nexus_Engine_Nucleus</span>
