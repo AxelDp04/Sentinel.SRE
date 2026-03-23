@@ -6,22 +6,22 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
-# We can switch between Groq and Gemini easily
-USE_GEMINI = os.getenv("GEMINI_API_KEY") is not None
-
-# Model selection is now 100% dynamic via environment variables
+# Prioritize Groq for stable Tier 4 operations
+USE_GROQ = os.getenv("GROQ_API_KEY") is not None
 MODEL_NAME = os.getenv("MODEL_NAME")
 
-if USE_GEMINI:
-    from langchain_google_genai import ChatGoogleGenerativeAI
-    effective_model = MODEL_NAME or "gemini-1.5-flash"
-    llm = ChatGoogleGenerativeAI(model=effective_model)
-    print(f"[*] Nexus Engine using Gemini Model: {effective_model}")
-else:
+if USE_GROQ:
     from langchain_groq import ChatGroq
     effective_model = MODEL_NAME or "llama-3.3-70b-versatile"
-    llm = ChatGroq(model=effective_model)
-    print(f"[*] Nexus Engine using Groq Model: {effective_model}")
+    llm = ChatGroq(model=effective_model, temperature=0.3)
+    print(f"[*] Nexus Engine using Groq Model (Stable): {effective_model}")
+elif os.getenv("GEMINI_API_KEY"):
+    from langchain_google_genai import ChatGoogleGenerativeAI
+    effective_model = MODEL_NAME or "gemini-1.5-flash"
+    llm = ChatGoogleGenerativeAI(model=effective_model, temperature=0.3)
+    print(f"[*] Nexus Engine using Gemini Model (Fallback): {effective_model}")
+else:
+    raise ValueError("❌ Error: No se detectó ni GROQ_API_KEY ni GEMINI_API_KEY.")
 
 class NexusState(TypedDict):
     task_id: str
