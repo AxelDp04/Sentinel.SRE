@@ -65,9 +65,11 @@ export async function POST(req: Request) {
     });
 
     if (!response.ok) {
-      const errorData = await response.text();
+      const errorData = await response.json();
       console.error("Sheriff_Gemini_API_Error:", errorData);
-      return NextResponse.json({ response: "Nexus SRE Sheriff: Error de comunicación con el núcleo de lenguaje." });
+      return NextResponse.json({ 
+        response: `Nexus SRE Sheriff: Error del Núcleo (HTTP ${response.status}). Detalle: ${JSON.stringify(errorData.error || errorData)}` 
+      });
     }
 
     const aiResult = await response.json();
