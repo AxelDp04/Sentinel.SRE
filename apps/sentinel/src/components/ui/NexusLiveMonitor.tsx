@@ -16,6 +16,7 @@ interface NexusTask {
 
 export function NexusLiveMonitor({ adminKey }: { adminKey: string | null }) {
   const [tasks, setTasks] = useState<NexusTask[]>([]);
+  const [isHovered, setIsHovered] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -60,12 +61,20 @@ export function NexusLiveMonitor({ adminKey }: { adminKey: string | null }) {
     };
   }, [adminKey]);
 
-  // Auto-scroll to bottom of logs
+  // Auto-scroll Inteligente (Axel Perez Requirement)
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    if (scrollRef.current && !isHovered) {
+      const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
+      const isAtBottom = scrollHeight - scrollTop <= clientHeight + 150; // Buffer de 150px
+      
+      if (isAtBottom) {
+        scrollRef.current.scrollTo({
+          top: scrollRef.current.scrollHeight,
+          behavior: 'smooth'
+        });
+      }
     }
-  }, [tasks]);
+  }, [tasks, isHovered]);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -149,7 +158,10 @@ export function NexusLiveMonitor({ adminKey }: { adminKey: string | null }) {
 
       <div 
         ref={scrollRef}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
         className="divide-y divide-white/5 max-h-[600px] overflow-y-auto custom-scrollbar"
+        style={{ overflowAnchor: 'none' }}
       >
         {tasks.map((task) => (
           <div key={task.id} className="p-6 space-y-4 hover:bg-white/5 transition-all">
