@@ -21,6 +21,11 @@ export async function GET(req: Request) {
         id: "arqovex", 
         url: process.env.ARQOVEX_SUPABASE_URL,
         type: "supabase"
+      },
+      { 
+        id: "agentscout", 
+        url: process.env.AGENT_SCOUT_URL || "https://agentscout.com",
+        type: "vercel"
       }
     ];
 

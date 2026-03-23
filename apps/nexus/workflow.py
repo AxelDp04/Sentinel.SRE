@@ -152,6 +152,10 @@ def action_node(state: NexusState):
         state["resolution_steps"].append("Isolation: Modo Centinela Silencioso activado para ARQOVEX.")
         state["action_executed"] = "SILENT_MONITOR_SYNC"
         state["resolution_steps"].append(f"Action Engine: Sincronizando telemetría de Supabase ({arqovex_target[:15]}...)")
+    elif project == "AGENTSCOUT":
+        state["resolution_steps"].append("Isolation: Modo Centinela Silencioso activado para AgentScout.")
+        state["action_executed"] = "SILENT_MONITOR_SYNC"
+        state["resolution_steps"].append("Action Engine: Sincronizando telemetría de Vercel/Middleware.")
     else:
         # Default RETRY_STRATEGY
         if "timeout" in error_desc or "network" in error_desc or "connection" in error_desc:
