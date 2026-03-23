@@ -27,6 +27,7 @@ class NexusState(TypedDict):
     task_id: str
     project_name: str
     error_description: str
+    language: str # 'en' or 'es'
     resolution_steps: list[str]
     proposed_solution: Optional[str]
     security_feedback: Optional[str]
@@ -38,50 +39,76 @@ class NexusState(TypedDict):
     end_time: float
     final_output: Optional[dict]
 
+def language_detector(state: NexusState):
+    """Detects the language of the error description (en/es)."""
+    text = state["error_description"].lower()
+    
+    # Simple keyword-based detection to save latency
+    en_keywords = ["error", "failed", "timeout", "not found", "issue", "connection", "gateway"]
+    es_keywords = ["fallo", "error", "tiempo", "conexion", "no encontrado", "problema"]
+    
+    # default to 'es' but check for 'en'
+    state["language"] = "en" if any(kw in text for kw in en_keywords) and not any(kw in text for kw in es_keywords) else "es"
+    
+    # If ambiguous, use LLM for 1-token check
+    prompt = f"Detect language (respond only 'en' or 'es'): {state['error_description']}"
+    res = llm.invoke([HumanMessage(content=prompt)])
+    state["language"] = res.content.strip().lower()[:2]
+    
+    print(f"[*] Language Detected: {state['language']}")
+    return state
+
 def sre_agent(state: NexusState):
     import time
     if not state.get("start_time"):
         state["start_time"] = time.time()
         state["retry_count"] = 0
         
-    print(f"\n[{state['task_id']}] [SRE Agent Analyzing] Evaluando logs de error...")
+    print(f"\n[{state['task_id']}] [SRE Agent Analyzing] Evaluating error logs...")
     
-    prompt = f"""
-    Eres un SRE Senior diagnosticando un error en el proyecto '{state['project_name']}'.
-    Descripción del error: {state['error_description']}
+    lang = state.get("language", "es")
     
-    Pasos de resolución previos / Feedback de seguridad: {state['security_feedback'] if state.get('security_feedback') else 'Ninguno'}
+    system_prompts = {
+        "es": "Eres un Site Reliability Engineer Senior. Resuélvelo rápido y breve. Sin explicaciones innecesarias. RESPONDE EN ESPAÑOL.",
+        "en": "You are a Senior Site Reliability Engineer. Solve it quickly and briefly. No unnecessary explanations. RESPOND IN ENGLISH."
+    }
     
-    Genera una propuesta de solución técnica MUY BREVE (máximo 150 caracteres) enfocada en la causa raíz.
-    """
+    human_prompts = {
+        "es": f"Eres un SRE Senior diagnosticando un error en el proyecto '{state['project_name']}'.\nDescripción del error: {state['error_description']}\n\nPropuesta previa/Security Feedback: {state.get('security_feedback', 'Ninguno')}\n\nGenera una propuesta técnica MUY BREVE (máximo 150 caracteres).",
+        "en": f"You are a Senior SRE diagnosing an error in project '{state['project_name']}'.\nError description: {state['error_description']}\n\nPrevious proposal/Security Feedback: {state.get('security_feedback', 'None')}\n\nGenerate a VERY BRIEF technical proposal (max 150 chars)."
+    }
     
     messages = [
-        SystemMessage(content="Eres un Site Reliability Engineer Senior. Resuélvelo rápido y breve. Sin explicaciones innecesarias."),
-        HumanMessage(content=prompt)
+        SystemMessage(content=system_prompts.get(lang)),
+        HumanMessage(content=human_prompts.get(lang))
     ]
     
     response = llm.invoke(messages)
     solution = response.content
     
     state["proposed_solution"] = solution
-    state["resolution_steps"].append("SRE Agent: Analizó el error y propuso una solución técnica.")
+    step = "SRE Agent: Analizó el error y propuso una solución técnica." if lang == "es" else "SRE Agent: Analyzed the error and proposed a technical solution."
+    state["resolution_steps"].append(step)
     return state
 
 def security_agent(state: NexusState):
-    print(f"\n[{state['task_id']}] [Security Auditor Reviewing] Validando impacto de seguridad...")
+    print(f"\n[{state['task_id']}] [Security Auditor Reviewing] Validating security impact...")
     
-    prompt = f"""
-    Eres un Auditor de Seguridad para el proyecto '{state['project_name']}'.
-    Un SRE ha propuesto la siguiente solución para un error:
-    {state['proposed_solution']}
+    lang = state.get("language", "es")
     
-    ¿Esta solución introduce alguna vulnerabilidad o riesgo grave? 
-    Responde ÚNICAMENTE con 'APPROVED' si es segura, o 'REJECTED: [Motivo]' si es peligrosa.
-    """
+    system_prompts = {
+        "es": "Eres un Auditor de Seguridad estricto. Proteges la infraestructura. RESPONDE EN ESPAÑOL.",
+        "en": "You are a strict Security Auditor. Protect the infrastructure. RESPOND IN ENGLISH."
+    }
+    
+    human_prompts = {
+        "es": f"Un SRE ha propuesto la siguiente solución para un error en '{state['project_name']}':\n{state['proposed_solution']}\n\n¿Esta solución introduce alguna vulnerabilidad?\nResponde ÚNICAMENTE con 'APPROVED' o 'REJECTED: [Motivo]'.",
+        "en": f"An SRE has proposed the following solution for error in '{state['project_name']}':\n{state['proposed_solution']}\n\nDoes this solution introduce any vulnerability?\nRespond ONLY with 'APPROVED' or 'REJECTED: [Reason]'."
+    }
     
     messages = [
-        SystemMessage(content="Eres un Auditor de Seguridad estricto. Proteges la infraestructura."),
-        HumanMessage(content=prompt)
+        SystemMessage(content=system_prompts.get(lang)),
+        HumanMessage(content=human_prompts.get(lang))
     ]
     
     response = llm.invoke(messages)
@@ -90,96 +117,112 @@ def security_agent(state: NexusState):
     if result.startswith("APPROVED"):
         state["security_approved"] = True
         state["security_feedback"] = None
-        state["resolution_steps"].append("Security Agent: Aprobó la solución técnica.")
+        step = "Security Agent: Aprobó la solución técnica." if lang == "es" else "Security Agent: Approved the technical solution."
+        state["resolution_steps"].append(step)
     else:
         state["security_approved"] = False
         state["security_feedback"] = result
-        state["resolution_steps"].append(f"Security Agent: Rechazó la solución. Motivo: {result}")
+        step = f"Security Agent: Rechazó la solución. Motivo: {result}" if lang == "es" else f"Security Agent: Rejected the solution. Reason: {result}"
+        state["resolution_steps"].append(step)
     
     return state
 
 def action_node(state: NexusState):
-    print(f"\n[{state['task_id']}] [Nexus Arms] Ejecutando Action Engine...")
+    print(f"\n[{state['task_id']}] [Nexus Arms] Executing Action Engine...")
     import time
     
     error_desc = state["error_description"].lower()
     project = state.get("project_name", "").upper()
+    lang = state.get("language", "es")
     
+    def log_step(es, en):
+        state["resolution_steps"].append(es if lang == "es" else en)
+
     # Lógica Adaptativa por Proyecto (Project Isolation Protocol)
-    neon_target = os.getenv("AUDITACAR_NEON_DATABASE_URL")
-    arqovex_target = os.getenv("ARQOVEX_SUPABASE_URL")
+    neon_target = os.getenv("AUDITACAR_NEON_DATABASE_URL") or "NEON_DB"
     
     if project == "AUDITACAR":
-        state["resolution_steps"].append(f"Isolation: Nexus artillería apuntada a Neon ({neon_target[:15]}...)")
-        if "504" in error_desc or "timeout" in error_desc.lower() or "gateway" in error_desc.lower():
+        log_step(f"Isolation: Nexus artillería apuntada a Neon ({neon_target[:15]}...)", 
+                 f"Isolation: Nexus artillery aimed at Neon ({neon_target[:15]}...)")
+        
+        if "504" in error_desc or "timeout" in error_desc or "gateway" in error_desc:
             state["action_executed"] = "VERCEL_INFRASTRUCTURE_RESCUE"
-            state["resolution_steps"].append("ALERT: Middleware Connectivity Lost (504 Gateway Timeout).")
-            state["resolution_steps"].append("Diagnostic: El fallo no reside en el núcleo SQL (Neon), sino en el Deployment Layer de Vercel.")
-            state["resolution_steps"].append("Action Engine: Solicitando 'Clean Redeploy' vía Vercel Hook API.")
-        elif "missing" in error_desc.lower() or "renamed" in error_desc.lower() or "intervention" in error_desc.lower():
+            log_step("ALERT: Middleware Connectivity Lost (504 Gateway Timeout).", "ALERT: Middleware Connectivity Lost (504 Gateway Timeout).")
+            log_step("Diagnostic: El fallo no reside en el núcleo SQL (Neon), sino en el Deployment Layer de Vercel.",
+                     "Diagnostic: Fault lies in Vercel Deployment Layer, not Neon SQL core.")
+            log_step("Action Engine: Solicitando 'Clean Redeploy' vía Vercel Hook API.", 
+                     "Action Engine: Requesting 'Clean Redeploy' via Vercel Hook API.")
+        elif "missing" in error_desc or "renamed" in error_desc or "intervention" in error_desc:
             state["action_executed"] = "EXTERNAL_INTRUSION_SHIELD"
-            state["resolution_steps"].append("CRITICAL: Table missing or renamed in Neon_DB. Manual Intervention Detected.")
-            state["resolution_steps"].append("Action Engine: Bloqueando acceso a API Gateway de AuditaCar por seguridad.")
-            state["resolution_steps"].append("Action Engine: Restaurando tabla 'vehicles' desde backup frío en Neon.")
+            log_step("CRITICAL: Table missing or renamed in Neon_DB. Manual Intervention Detected.",
+                     "CRITICAL: Table missing or renamed in Neon_DB. Manual Intervention Detected.")
+            log_step("Action Engine: Bloqueando acceso a API Gateway de AuditaCar por seguridad.",
+                     "Action Engine: Blocking AuditaCar API Gateway access for security.")
+            log_step("Action Engine: Restaurando tabla 'vehicles' desde backup frío en Neon.",
+                     "Action Engine: Restoring 'vehicles' table from cold backup in Neon.")
         elif "column" in error_desc or "schema" in error_desc or "relation" in error_desc:
             state["action_executed"] = "EMERGENCY_SCHEMA_ROLLBACK"
-            state["resolution_steps"].append("Critical: Fallo de integridad estructural detectado en Neon.")
-            state["resolution_steps"].append("Action Engine: Ejecutando rollback a snapshot pre-migración (Neon-Point-In-Time-Restore).")
-            state["resolution_steps"].append("Action Engine: Estructura de tablas restaurada exitosamente.")
+            log_step("Critical: Fallo de integridad estructural detectado en Neon.", 
+                     "Critical: Structural integrity failure detected in Neon.")
+            log_step("Action Engine: Ejecutando rollback a snapshot pre-migración (Neon-Point-In-Time-Restore).",
+                     "Action Engine: Executing rollback to pre-migration snapshot.")
+            log_step("Action Engine: Estructura de tablas restaurada exitosamente.", 
+                     "Action Engine: Table structure successfully restored.")
         elif "connection limit" in error_desc or "pool exhausted" in error_desc:
             state["action_executed"] = "CLEAN_CONNECTION_POOL & API_RECONNECT"
-            state["resolution_steps"].append("Action Engine: Purgando pool de conexiones en Neon...")
-            state["resolution_steps"].append("Action Engine: Re-estableciendo sesión de base de datos...")
+            log_step("Action Engine: Purgando pool de conexiones en Neon...", "Action Engine: Purging connection pool in Neon...")
+            log_step("Action Engine: Re-estableciendo sesión de base de datos...", "Action Engine: Re-establishing database session...")
         elif "api" in error_desc or "gateway" in error_desc:
             state["action_executed"] = "API_RECONNECT"
-            state["resolution_steps"].append("Action Engine: Re-sincronizando API Gateway de AuditaCar...")
+            log_step("Action Engine: Re-sincronizando API Gateway de AuditaCar...", "Action Engine: Re-syncing AuditaCar API Gateway...")
         elif "db" in error_desc or "database" in error_desc or "pool" in error_desc:
             state["action_executed"] = "DB_REBOOT_SIM"
-            state["resolution_steps"].append("Action Engine: Reiniciando instancia de base de datos AuditaCar en Neon...")
+            log_step("Action Engine: Reiniciando instancia de base de datos AuditaCar en Neon...", 
+                     "Action Engine: Rebooting AuditaCar DB instance in Neon...")
         elif "REDEPLOY_SUCCESS" in error_desc:
             state["action_executed"] = "CONFIRMATION_SENT"
-            state["resolution_steps"].append("Sentinel: Verificando estado post-redeploy...")
-            state["resolution_steps"].append("Action Engine: 100% Uptime Confirmado en Vercel & Neon.")
-            state["resolution_steps"].append("Action Engine: Enviando reporte de victoria final a WhatsApp.")
+            log_step("Sentinel: Verificando estado post-redeploy...", "Sentinel: Verifying post-redeploy status...")
+            log_step("Action Engine: 100% Uptime Confirmado en Vercel & Neon.", "Action Engine: 100% Uptime confirmed in Vercel & Neon.")
+            log_step("Action Engine: Enviando reporte de victoria final a WhatsApp.", "Action Engine: Sending final victory report to WhatsApp.")
         else:
             state["action_executed"] = "RETRY_STRATEGY"
-            state["resolution_steps"].append("Action Engine: Iniciando RETRY_STRATEGY para AuditaCar.")
+            log_step("Action Engine: Iniciando RETRY_STRATEGY para AuditaCar.", "Action Engine: Starting RETRY_STRATEGY for AuditaCar.")
         
-        # WhatsApp Tier 4 Override for Integrity
         if "column" in error_desc:
-             state["resolution_steps"].append("WhatsApp: 📍 ALERTA DE ESTRUCTURA: FALLO DE INTEGRIDAD EN AUDITACAR.")
+             log_step("WhatsApp: 📍 ALERTA DE ESTRUCTURA: FALLO DE INTEGRIDAD EN AUDITACAR.", 
+                      "WhatsApp: 📍 SCHEMA ALERT: INTEGRITY FAILURE IN AUDITACAR.")
     elif project == "ARQOVEX":
-        state["resolution_steps"].append(f"Isolation: Arqovex Engine Detected ({arqovex_target[:15]}...)")
-        if "saturation" in error_desc.lower() or "connection" in error_desc.lower():
+        log_step(f"Isolation: Arqovex Engine Detected", f"Isolation: Arqovex Engine Detected")
+        if "saturation" in error_desc or "connection" in error_desc:
             state["action_executed"] = "SUPABASE_POOL_CLEANUP"
-            state["resolution_steps"].append("Action Engine: Detectada saturación de conexiones en Arqovex.")
-            state["resolution_steps"].append("Action Engine: Ejecutando purga selectiva de sesiones inactivas en Supabase...")
+            log_step("Action Engine: Detectada saturación de conexiones en Arqovex.", "Action Engine: Connection saturation detected in Arqovex.")
+            log_step("Action Engine: Ejecutando purga selectiva de sesiones inactivas en Supabase...", 
+                     "Action Engine: Executing selective purge of inactive sessions in Supabase...")
         else:
             state["action_executed"] = "SILENT_MONITOR_SYNC"
-            state["resolution_steps"].append("Action Engine: Sincronizando telemetría en Modo Pasivo.")
+            log_step("Action Engine: Sincronizando telemetría en Modo Pasivo.", "Action Engine: Syncing telemetry in Passive Mode.")
     elif project == "NEXUS_JOBS":
-        state["resolution_steps"].append("Isolation: Distributed Job Engine (Queue: nexus_jobs)")
+        log_step("Isolation: Distributed Job Engine (Queue: nexus_jobs)", "Isolation: Distributed Job Engine (Queue: nexus_jobs)")
         if "CRITICAL_JOB_FAILURE" in error_desc:
             state["action_executed"] = "JOB_RESET & CACHE_PURGE"
-            state["resolution_steps"].append("Action Engine: Detectado fallo crítico en cola de Jobs.")
-            state["resolution_steps"].append("Action Engine: Limpiando caché local del Worker y reseteando estado de Job.")
-            state["resolution_steps"].append("Action Engine: Job re-encolado exitosamente para ejecución posterior.")
+            log_step("Action Engine: Detectado fallo crítico en cola de Jobs.", "Action Engine: Critical failure detected in Jobs queue.")
+            log_step("Action Engine: Limpiando caché local del Worker y reseteando estado de Job.", 
+                     "Action Engine: Clearing local worker cache and resetting job status.")
+            log_step("Action Engine: Job re-encolado exitosamente para ejecución posterior.", 
+                     "Action Engine: Job successfully re-queued for later execution.")
         else:
             state["action_executed"] = "GENERIC_JOB_RETRY"
-            state["resolution_steps"].append("Action Engine: Re-intentando tarea de fondo...");
-    elif project == "AGENTSCOUT":
-        state["resolution_steps"].append("Isolation: Modo Centinela Silencioso activado para AgentScout.")
-        state["action_executed"] = "SILENT_MONITOR_SYNC"
-        state["resolution_steps"].append("Action Engine: Sincronizando telemetría de Vercel/Middleware.")
+            log_step("Action Engine: Re-intentando tarea de fondo...", "Action Engine: Retrying background task...")
     else:
-        # Default RETRY_STRATEGY
         if "timeout" in error_desc or "network" in error_desc or "connection" in error_desc:
             state["action_executed"] = "RETRY_STRATEGY"
-            state["resolution_steps"].append("Action Engine: Detectado fallo transitorio. Iniciando RETRY_STRATEGY.")
+            log_step("Action Engine: Detectado fallo transitorio. Iniciando RETRY_STRATEGY.", 
+                     "Action Engine: Transient failure detected. Starting RETRY_STRATEGY.")
         else:
             state["action_executed"] = "MANUAL_INTERVENTION_REQUIRED"
             state["was_successful"] = False
-            state["resolution_steps"].append("Action Engine: Error complejo detectado. Mitigación automática abortada.")
+            log_step("Action Engine: Error complejo detectado. Mitigación automática abortada.", 
+                     "Action Engine: Complex error detected. Automatic mitigation aborted.")
 
     # Ejecución de la simulación (Si no es manual)
     if state["action_executed"] != "MANUAL_INTERVENTION_REQUIRED":
@@ -190,7 +233,8 @@ def action_node(state: NexusState):
         for i in range(max_retries):
             state["retry_count"] = i + 1
             wait_time = (i + 1) * 2 # Backoff simple: 2s, 4s
-            state["resolution_steps"].append(f"Action Node: {state['action_executed']} en curso (Esperando {wait_time}s)...")
+            log_step(f"Action Node: {state['action_executed']} en curso (Esperando {wait_time}s)...",
+                     f"Action Node: {state['action_executed']} in progress (Waiting {wait_time}s)...")
             time.sleep(wait_time)
             
             # Simulamos éxito en el segundo intento siempre
@@ -199,10 +243,11 @@ def action_node(state: NexusState):
                 break
         
         state["was_successful"] = success
-        if success:
-            state["resolution_steps"].append(f"Action Node: {state['action_executed']} EXITOSO.")
-        else:
-            state["resolution_steps"].append(f"Action Node: {state['action_executed']} FALLIDO.")
+        log_step(f"Action Node: {state['action_executed']} EXITOSO.", 
+                 f"Action Node: {state['action_executed']} SUCCESSFUL.")
+    else:
+        log_step("Action Node: Finalizado sin ejecución automática.",
+                 "Action Node: Finished without automatic execution.")
 
     # Cierre de métrica de tiempo
     state["end_time"] = time.time()
@@ -230,12 +275,14 @@ def should_continue(state: NexusState):
 # Define the graph
 graph_builder = StateGraph(NexusState)
 
+graph_builder.add_node("language_detector", language_detector)
 graph_builder.add_node("sre_agent", sre_agent)
 graph_builder.add_node("security_agent", security_agent)
 graph_builder.add_node("action_node", action_node)
 
-graph_builder.set_entry_point("sre_agent")
+graph_builder.set_entry_point("language_detector")
 
+graph_builder.add_edge("language_detector", "sre_agent")
 graph_builder.add_edge("sre_agent", "security_agent")
 graph_builder.add_conditional_edges(
     "security_agent",
