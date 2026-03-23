@@ -4,6 +4,7 @@ supabase
 langgraph
 langchain
 langchain-groq
+resend
 pydantic
 python-dotenv
 asyncio
