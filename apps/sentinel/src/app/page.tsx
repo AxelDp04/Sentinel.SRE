@@ -127,7 +127,7 @@ export default function Home() {
           <div className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-8 pb-28 sm:pb-8 space-y-16 sm:space-y-24 animate-in fade-in slide-in-from-bottom-2 duration-1000 max-w-6xl mx-auto w-full">
             
             {/* VITALITY FLOW MONITOR (ECG PULSE) */}
-            <div className="w-full">
+            <div id="section-vitality" className="w-full">
               <VitalityFlowMonitor />
             </div>
 
@@ -174,7 +174,7 @@ export default function Home() {
             </section>
 
             {/* CATEGORY 3: ESTADO DEL ECOSISTEMA (FLUJO DE VIDA) */}
-            <section className="space-y-12">
+            <section id="section-ecosystem" className="space-y-12">
               <div className="flex items-center gap-6">
                  <div className="h-px flex-1 bg-white/5"></div>
                  <span className="text-[11px] font-black uppercase tracking-[0.5em] text-emerald-500/50">03_Ecosystem_Vitality_Matrix</span>

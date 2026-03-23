@@ -18,9 +18,10 @@ interface MobileNavBarProps {
 
 const TABS = [
   { id: "dashboard", icon: LayoutDashboard, label: "Hub" },
-  { id: "monitor",   icon: Activity,         label: "Monitor" },
-  { id: "jobs",      icon: BriefcaseBusiness, label: "Jobs" },
-  { id: "sre",       icon: Shield,            label: "SRE" },
+  { id: "vitality",  icon: Activity,         label: "Streams" },
+  { id: "jobs",      icon: BriefcaseBusiness, label: "Audit" },
+  { id: "sre",       icon: Shield,            label: "Terminal" },
+  { id: "monitor",   icon: Activity,         label: "Nucleo" },
 ];
 
 export const MobileNavBar = ({ onToggleSafeMode, isSafeMode, onTabChange }: MobileNavBarProps) => {
