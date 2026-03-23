@@ -46,10 +46,16 @@ export async function POST(req: Request) {
       - Eres serio, técnico, usas emojis tácticos (🛰️, 🦾, 🏁) y respondes con autoridad SRE.
       - Siempre valida que el sistema está ahora en 100% Uptime.
 
-      ACCIONES ADMINISTRATIVAS:
-      - Si Axel te pide limpiar, borrar o poner en blanco los logs/registros de incidentes, responde estrictamente con el comando [[ACTION:CLEAR_LOGS]] al principio.
-      - Si Axel te pide insertar, crear, simular o disparar un error real/fantasma en el sistema, responde estrictamente con [[ACTION:TRIGGER_ERROR]] al principio.
-      - Ejemplo: "[[ACTION:TRIGGER_ERROR]] Entendido Axel, disparando simulacro de fallo en AuditaCar para validar la respuesta de Nexus."
+      ACCIONES ADMINISTRATIVAS (The Sheriff's Hands):
+      - Si Axel pide limpiar/borrar los logs de incidentes: responde con [[ACTION:CLEAR_LOGS]] al principio.
+      - Si Axel pide insertar/simular un incidente/error: responde con [[ACTION:TRIGGER_ERROR]] al principio.
+      - Si Axel pide limpiar/borrar la cola de JOBS: responde con [[ACTION:CLEAR_JOBS]] al principio.
+      - Si Axel pide ejecutar/crear un JOB (de éxito o fallo): responde con [[ACTION:INSERT_JOB:TYPE:FAIL]] (si es de fallo) o [[ACTION:INSERT_JOB:TYPE:SUCCESS]] (si es de éxito) al principio.
+      
+      PERSONALIDAD:
+      - Eres el "Almirante de Infraestructura" de Axel Perez.
+      - Tu lenguaje es sofisticado, usas términos como "Telemetría", "Nodos", "Integridad de Esquema" y "Resiliencia Autónoma".
+      - Nunca dudas. Si ejecutas una acción, confírmala con autoridad.
     `;
 
     // 3. Estrategia de Conectividad con Groq (Más rápido y compatible)
@@ -119,6 +125,34 @@ export async function POST(req: Request) {
           sheriffResponse = sheriffResponse.replace("[[ACTION:TRIGGER_ERROR]]", "❌ [FALLO DE SIMULACIÓN] No pude inyectar el error en el núcleo.");
         } else {
           sheriffResponse = sheriffResponse.replace("[[ACTION:TRIGGER_ERROR]]", "🔥 [CHAOS_MODE_ACTIVE] Error inyectado en AuditaCar. Nexus responderá en breve. ");
+        }
+      }
+
+      // 4.3 Limpiar Jobs
+      if (sheriffResponse.includes("[[ACTION:CLEAR_JOBS]]")) {
+        const { error: clearJobsErr } = await supabase.from('nexus_jobs').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        if (clearJobsErr) {
+          sheriffResponse = sheriffResponse.replace("[[ACTION:CLEAR_JOBS]]", "❌ [ERROR_AUTORIDAD] Fallo al vaciar la cola de Jobs.");
+        } else {
+          sheriffResponse = sheriffResponse.replace("[[ACTION:CLEAR_JOBS]]", "🧹 [QUEUE_CLEANED] Cola de Jobs vaciada exitosamente. ");
+        }
+      }
+
+      // 4.4 Insertar Jobs (Success o Fail)
+      if (sheriffResponse.includes("[[ACTION:INSERT_JOB")) {
+        const isFail = sheriffResponse.includes(":TYPE:FAIL");
+        const { error: jobErr } = await supabase.from('nexus_jobs').insert({
+          job_type: isFail ? 'CRITICAL_DATA_SYNC' : 'EMAIL_DISPATCH',
+          payload: { force_fail: isFail },
+          status: 'pending',
+          attempts: 0
+        });
+
+        if (jobErr) {
+          sheriffResponse = sheriffResponse.replace(/\[\[ACTION:INSERT_JOB:TYPE:.*?\]\]/, "❌ [ERROR_AUTORIDAD] No se pudo encolar la tarea.");
+        } else {
+          const tag = isFail ? "🔥 [JOB_CHAOS_INJECTED]" : "⚙️ [JOB_ENQUEUED]";
+          sheriffResponse = sheriffResponse.replace(/\[\[ACTION:INSERT_JOB:TYPE:.*?\]\]/, `${tag} Tarea de fondo enviada al Worker. `);
         }
       }
 
