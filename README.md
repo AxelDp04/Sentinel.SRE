@@ -65,4 +65,4 @@ Motor de multi-agentes que procesa incidentes detectados por Sentinel.
 - **DevOps 2.0:** Uso real de IA Agéntica para la resolución autónoma de incidentes de infraestructura.
 
 ---
-**Desarrollado para el HUB de Antigravity.** 🚀
+**** 
