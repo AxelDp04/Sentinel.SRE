@@ -20,8 +20,8 @@ const TABS = [
   { id: "dashboard", icon: LayoutDashboard, label: "Hub" },
   { id: "vitality",  icon: Activity,         label: "Streams" },
   { id: "jobs",      icon: BriefcaseBusiness, label: "Audit" },
-  { id: "sre",       icon: Shield,            label: "Terminal" },
-  { id: "monitor",   icon: Activity,         label: "Nucleo" },
+  { id: "sre",       icon: Shield,            label: "SRE" },
+  { id: "monitor",   icon: Activity,         label: "Terminal" },
 ];
 
 export const MobileNavBar = ({ onToggleSafeMode, isSafeMode, onTabChange }: MobileNavBarProps) => {

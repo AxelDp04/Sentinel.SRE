@@ -19,6 +19,16 @@ interface SidebarProps {
 }
 
 export const Sidebar = ({ onToggleSafeMode, isSafeMode }: SidebarProps) => {
+  const [activeTab, setActiveTab] = React.useState("dashboard");
+
+  const handleScroll = (id: string) => {
+    setActiveTab(id);
+    const el = document.getElementById(`section-${id}`);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
   return (
     <aside className="hidden md:flex w-64 bg-[#050505] border-r border-white/5 flex-col h-full shrink-0">
       <div className="p-6 flex items-center gap-3 mb-8">
@@ -32,10 +42,30 @@ export const Sidebar = ({ onToggleSafeMode, isSafeMode }: SidebarProps) => {
       </div>
 
       <nav className="flex-1 px-4 space-y-2">
-        <SidebarItem icon={<LayoutDashboard className="w-4 h-4" />} label="Dashboard Hub" active />
-        <SidebarItem icon={<Activity className="w-4 h-4" />} label="Live Streams" />
-        <SidebarItem icon={<Database className="w-4 h-4" />} label="Infrastructure" />
-        <SidebarItem icon={<Terminal className="w-4 h-4" />} label="Audit Terminal" />
+        <SidebarItem 
+          icon={<LayoutDashboard className="w-4 h-4" />} 
+          label="Dashboard Hub" 
+          active={activeTab === "dashboard"} 
+          onClick={() => handleScroll("dashboard")}
+        />
+        <SidebarItem 
+          icon={<Activity className="w-4 h-4" />} 
+          label="Live Streams" 
+          active={activeTab === "vitality"}
+          onClick={() => handleScroll("vitality")}
+        />
+        <SidebarItem 
+          icon={<Database className="w-4 h-4" />} 
+          label="Infrastructure" 
+          active={activeTab === "sre"}
+          onClick={() => handleScroll("sre")}
+        />
+        <SidebarItem 
+          icon={<Terminal className="w-4 h-4" />} 
+          label="Audit Terminal" 
+          active={activeTab === "monitor"}
+          onClick={() => handleScroll("monitor")}
+        />
       </nav>
 
       <div className="p-4 mt-auto">
@@ -61,8 +91,21 @@ export const Sidebar = ({ onToggleSafeMode, isSafeMode }: SidebarProps) => {
   );
 };
 
-const SidebarItem = ({ icon, label, active = false }: { icon: React.ReactNode, label: string, active?: boolean }) => (
-  <button className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all group ${active ? "bg-white/5 text-white" : "text-slate-500 hover:text-white"}`}>
+const SidebarItem = ({ 
+  icon, 
+  label, 
+  active = false, 
+  onClick 
+}: { 
+  icon: React.ReactNode, 
+  label: string, 
+  active?: boolean,
+  onClick?: () => void
+}) => (
+  <button 
+    onClick={onClick}
+    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all group ${active ? "bg-white/5 text-white" : "text-slate-500 hover:text-white"}`}
+  >
     <div className={`${active ? "text-sentinel" : "group-hover:text-sentinel"} transition-colors`}>{icon}</div>
     <span className="text-xs font-bold uppercase tracking-widest">{label}</span>
     {active && <div className="ml-auto w-1 h-1 rounded-full bg-sentinel shadow-[0_0_8px_#10b981]"></div>}
