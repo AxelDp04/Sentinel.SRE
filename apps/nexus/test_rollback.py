@@ -1,5 +1,13 @@
+import sys
+import os
 import time
 import uuid
+
+# Reinforcement: Asegurar que apps/nexus esté en el path
+current_dir = os.path.dirname(os.path.abspath(__file__))
+if current_dir not in sys.path:
+    sys.path.append(current_dir)
+
 from database import supabase
 from workflow import nexus_workflow
 

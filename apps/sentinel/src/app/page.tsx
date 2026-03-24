@@ -18,6 +18,7 @@ import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { SheriffControl } from "@/components/ui/SheriffControl";
 import { SRECommandCenter } from "@/components/ui/SRECommandCenter";
 import { JobDashboard } from "@/components/ui/JobDashboard";
+import { EmergencyRollback } from "@/components/ui/EmergencyRollback";
 import { supabase } from "@/lib/supabase";
 
 export default function Home() {
@@ -130,6 +131,11 @@ export default function Home() {
             <div id="section-vitality" className="w-full">
               <VitalityFlowMonitor />
             </div>
+
+            {/* EMERGENCY ROLLBACK PROTOCOL — Control Crítico de Emergencia */}
+            <section className="animate-in fade-in slide-in-from-top duration-700">
+              <EmergencyRollback adminKey={adminKey} />
+            </section>
 
             {/* CATEGORY 0: RESILIENCE COMMAND CENTER (ELITE METRICS) */}
             <section id="section-sre" className="space-y-8 animate-in fade-in zoom-in-95 duration-1000 delay-300">
