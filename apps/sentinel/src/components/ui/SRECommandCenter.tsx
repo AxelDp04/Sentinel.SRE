@@ -17,6 +17,7 @@ export function SRECommandCenter({ adminKey }: { adminKey: string | null }) {
     efficiency: 92,
     totalIncidents: 0
   });
+  const [prevMetrics, setPrevMetrics] = useState<SREMetrics | null>(null);
   const [backups, setBackups] = useState<any[]>([]);
 
   useEffect(() => {
@@ -39,12 +40,16 @@ export function SRECommandCenter({ adminKey }: { adminKey: string | null }) {
           const retries = incidents.reduce((a: number, b: any) => a + (b.retry_count || 0), 0);
           const efficiencyScore = Math.max(70, 100 - (retries * 2));
 
-          setMetrics({
+          const newMetrics = {
             sla: Number(slaValue.toFixed(2)),
             mttr: Number(avgMTTR.toFixed(2)),
             efficiency: efficiencyScore,
             totalIncidents: incidents.length
-          });
+          };
+
+          // Guardar métricas anteriores para detectar cambios
+          setPrevMetrics(prev => prev || newMetrics);
+          setMetrics(newMetrics);
         }
 
         // Fetch Backups
@@ -60,7 +65,8 @@ export function SRECommandCenter({ adminKey }: { adminKey: string | null }) {
     }
 
     fetchData();
-    const interval = setInterval(fetchData, 30000);
+    // ✅ Intervalo de 5 segundos para métricas en tiempo real
+    const interval = setInterval(fetchData, 5000);
     return () => clearInterval(interval);
   }, [adminKey]);
 
@@ -90,14 +96,23 @@ export function SRECommandCenter({ adminKey }: { adminKey: string | null }) {
             <Shield className="w-16 h-16 text-emerald-500" />
           </div>
           <div className="relative z-10 space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-emerald-500/10 rounded-lg">
-                  <Shield className="w-4 h-4 text-emerald-500" />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-emerald-500/10 rounded-lg">
+                    <Shield className="w-4 h-4 text-emerald-500" />
+                </div>
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500/50">SLA_Reliability</span>
               </div>
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500/50">SLA_Reliability</span>
+              {/* Indicador live — pulsa en tiempo real */}
+              <div className="flex items-center gap-1.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
+                <span className="text-[8px] font-mono text-emerald-800">LIVE</span>
+              </div>
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-4xl font-black tracking-tighter text-white">{metrics.sla}%</span>
+              <span className={`text-4xl font-black tracking-tighter transition-all duration-500 ${
+                metrics.sla >= 95 ? "text-emerald-400" : metrics.sla >= 80 ? "text-yellow-400" : "text-red-400"
+              }`}>{metrics.sla}%</span>
               <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">Synced</span>
             </div>
           </div>
@@ -109,14 +124,22 @@ export function SRECommandCenter({ adminKey }: { adminKey: string | null }) {
             <Zap className="w-16 h-16 text-blue-500" />
           </div>
           <div className="relative z-10 space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-500/10 rounded-lg">
-                  <Clock className="w-4 h-4 text-blue-500" />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-500/10 rounded-lg">
+                    <Clock className="w-4 h-4 text-blue-500" />
+                </div>
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-500/50">Resilience_MTTR</span>
               </div>
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-500/50">Resilience_MTTR</span>
+              <div className="flex items-center gap-1.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse shadow-[0_0_6px_rgba(96,165,250,0.8)]" />
+                <span className="text-[8px] font-mono text-blue-900">LIVE</span>
+              </div>
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-4xl font-black tracking-tighter text-white">{metrics.mttr}s</span>
+              <span className={`text-4xl font-black tracking-tighter transition-all duration-500 ${
+                metrics.mttr <= 5 ? "text-emerald-400" : metrics.mttr <= 15 ? "text-yellow-400" : "text-red-400"
+              }`}>{metrics.mttr}s</span>
               <span className="text-[10px] font-bold text-blue-400 uppercase tracking-widest text-glow">Nexus_Arms</span>
             </div>
           </div>
@@ -128,14 +151,22 @@ export function SRECommandCenter({ adminKey }: { adminKey: string | null }) {
             <BarChart3 className="w-16 h-16 text-purple-500" />
           </div>
           <div className="relative z-10 space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-500/10 rounded-lg">
-                  <Activity className="w-4 h-4 text-purple-500" />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-purple-500/10 rounded-lg">
+                    <Activity className="w-4 h-4 text-purple-500" />
+                </div>
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-purple-500/50">Core_Efficiency</span>
               </div>
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-purple-500/50">Core_Efficiency</span>
+              <div className="flex items-center gap-1.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse shadow-[0_0_6px_rgba(192,132,252,0.8)]" />
+                <span className="text-[8px] font-mono text-purple-900">LIVE</span>
+              </div>
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-4xl font-black tracking-tighter text-white">{metrics.efficiency}%</span>
+              <span className={`text-4xl font-black tracking-tighter transition-all duration-500 ${
+                metrics.efficiency >= 90 ? "text-emerald-400" : metrics.efficiency >= 75 ? "text-yellow-400" : "text-red-400"
+              }`}>{metrics.efficiency}%</span>
               <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Optimized</span>
             </div>
           </div>
