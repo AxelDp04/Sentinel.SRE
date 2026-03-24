@@ -19,6 +19,7 @@ import { SheriffControl } from "@/components/ui/SheriffControl";
 import { SRECommandCenter } from "@/components/ui/SRECommandCenter";
 import { JobDashboard } from "@/components/ui/JobDashboard";
 import { EmergencyRollback } from "@/components/ui/EmergencyRollback";
+import { NexusTerminal } from "@/components/ui/NexusTerminal";
 import { supabase } from "@/lib/supabase";
 
 export default function Home() {
@@ -174,8 +175,9 @@ export default function Home() {
                 <div className="h-px w-64 bg-gradient-to-r from-transparent via-blue-500/20 to-transparent" />
               </div>
               
-              <div className="w-full">
+              <div className="w-full space-y-8">
                 <NexusLiveMonitor adminKey={adminKey} />
+                <NexusTerminal adminKey={adminKey} />
               </div>
             </section>
 
