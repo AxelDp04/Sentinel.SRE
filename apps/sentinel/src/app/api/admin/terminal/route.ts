@@ -16,7 +16,9 @@ import path from "path";
 const WHITELISTED_COMMANDS: Record<string, string> = {
   "help": "echo 'Comandos disponibles: test_rollback, health_check, clean_logs, help'",
   "test_rollback": "python apps/nexus/test_rollback.py",
+  "python apps/nexus/test_rollback.py": "python apps/nexus/test_rollback.py",
   "health_check": "python apps/nexus/check_test_status.py",
+  "python apps/nexus/check_test_status.py": "python apps/nexus/check_test_status.py",
   "clean_logs": "echo '' > apps/nexus/test_output.log && echo 'Logs limpiados exitosamente.'"
 };
 
