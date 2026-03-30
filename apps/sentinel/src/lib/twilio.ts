@@ -10,6 +10,16 @@ const toRaw = process.env.TWILIO_OWNER_NUMBER || process.env.MY_WHATSAPP_NUMBER 
 const fromNumber = fromRaw ? (fromRaw.startsWith('whatsapp:') ? fromRaw : `whatsapp:${fromRaw}`) : '';
 
 export const sendWhatsAppMessage = async (to: string, messageBody: string) => {
+  if (!accountSid) {
+    console.warn("Twilio Error: TWILIO_ACCOUNT_SID is missing.");
+  }
+  if (!authToken) {
+    console.warn("Twilio Error: TWILIO_AUTH_TOKEN is missing.");
+  }
+  if (!fromNumber) {
+    console.warn("Twilio Error: TWILIO_WHATSAPP_NUMBER is missing.");
+  }
+
   if (!accountSid || !authToken || !fromNumber) {
     console.warn("Twilio credentials missing. WhatsApp message skipped.");
     return false;
@@ -19,18 +29,18 @@ export const sendWhatsAppMessage = async (to: string, messageBody: string) => {
     const client = twilio(accountSid, authToken);
     const toNumber = to.startsWith('whatsapp:') ? to : `whatsapp:${to}`;
     
-    // Twilio WhatsApp messages shouldn't be excessively long, 
-    // but the Gemini summary should naturally be concise.
+    console.log(`[TWILIO] Attempting to send to ${toNumber} from ${fromNumber}...`);
+    
     const message = await client.messages.create({
       body: messageBody,
       from: fromNumber,
       to: toNumber,
     });
     
-    console.log(`WhatsApp sent! Message SID: ${message.sid}`);
+    console.log(`✅ WhatsApp sent! SID: ${message.sid}`);
     return true;
   } catch (error: any) {
-    console.error("Twilio WhatsApp Error:", error.message);
+    console.error("❌ Twilio WhatsApp Dispatch Error:", error.message);
     throw new Error(`Failed to send WhatsApp: ${error.message}`);
   }
 };

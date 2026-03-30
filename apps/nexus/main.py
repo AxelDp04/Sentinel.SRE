@@ -89,7 +89,7 @@ async def poll_supabase():
             print(f"❌ Error during polling loop: {e}")
             
         iteration += 1
-        await asyncio.sleep(5)  # Poll every 5 seconds as requested by Axel
+        await asyncio.sleep(1)  # Polling ultra-rápido (1s) para respuesta inmediata (Real-time SRE)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
